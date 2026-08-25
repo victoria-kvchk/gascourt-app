@@ -981,6 +981,7 @@ function charger(){
       b.releves   = b.releves   || [];
       b.factures  = b.factures  || [];
       b.parts     = b.parts     || JSON.parse(JSON.stringify(DEFAULT_STATE.parts));
+      b.partsMaj  = b.partsMaj  || {};
       b.signalements = b.signalements || [];
       b.supprimes    = b.supprimes    || [];
       b.calcul = b.calcul || {};
@@ -1039,6 +1040,25 @@ function fusionner(local, entrant){
       const x = tombes[nom+':'+o.id];
       return !(x && x > (o.maj||''));
     });
+  }
+  /* Les parts convenues de l'abonnement ne sont pas une liste d'enregistrements
+     datés mais un réglage, et rien ne les recopiait : elles restaient celles de
+     l'appareil. Un téléphone fraîchement installé, dont les parts sont vides,
+     cessait donc de répartir l'abonnement et sous-facturait tout le monde, sans
+     que rien ne le signale. Elles portent maintenant leur propre date de
+     modification, et l'appareil vierge prend celles qu'il reçoit. */
+  sortie.partsMaj = Object.assign({}, local.partsMaj || {});
+  sortie.parts = JSON.parse(JSON.stringify(local.parts || {eau:{}, elec:{}}));
+  for(const fl of ['eau','elec']){
+    const la = ((entrant.parts || {})[fl]) || {};
+    if(!Object.keys(la).length) continue;
+    const ici = (sortie.parts[fl]) || {};
+    const dateIci = (local.partsMaj || {})[fl] || '';
+    const dateLa  = (entrant.partsMaj || {})[fl] || '';
+    if(!Object.keys(ici).length || dateLa > dateIci){
+      sortie.parts[fl] = JSON.parse(JSON.stringify(la));
+      if(dateLa) sortie.partsMaj[fl] = dateLa;
+    }
   }
   sortie.releves.sort((a,b)=> a.date<b.date?-1:1);
   sortie.factures.sort((a,b)=> (a.date||'')<(b.date||'')?-1:1);
@@ -2709,6 +2729,8 @@ function brancherFac(){
         const v = parseFloat(String(i.value).replace(',','.'));
         S.parts[fl][i.dataset.part] = isNaN(v) ? 0 : v;
       });
+      // datées, pour que la fusion sache laquelle des deux versions garder
+      S.partsMaj = S.partsMaj || {}; S.partsMaj[fl] = maintenant();
     }
     if(facEdit) marquer(Object.assign(S.factures.find(x=>x.id===facEdit), f));
     else S.factures.push(marquer(f));
