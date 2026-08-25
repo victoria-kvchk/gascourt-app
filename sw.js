@@ -14,13 +14,18 @@
  *    arrière-plan. L'app s'ouvre instantanément et la mise à jour est prise au
  *    lancement suivant, ce qui vaut mieux qu'une attente au démarrage.
  */
-const VERSION = 'd3df17938f91';
+const VERSION = 'e1b0075079bf';
 const RESERVE = 'gascourt-' + VERSION;
 const PIECES = ['./', './index.html', './manifest.webmanifest',
-                './icone-180.png', './icone-192.png', './icone-512.png'];
+                './icone-180.png?v=2e06db85', './icone-192.png?v=2e06db85', './icone-512.png?v=2e06db85'];
 
+/* On demande ces pièces au réseau sans passer par le cache ordinaire du
+   navigateur. Sans cela une réserve neuve pourrait se remplir de vieux
+   fichiers : elle est neuve, ils ne le sont pas, et rien ne le signale. */
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(RESERVE).then(c => c.addAll(PIECES)).then(()=> self.skipWaiting()));
+  e.waitUntil(caches.open(RESERVE)
+    .then(c => c.addAll(PIECES.map(p => new Request(p, {cache: 'reload'}))))
+    .then(()=> self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
