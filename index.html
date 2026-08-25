@@ -1,0 +1,3537 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charges du corps de ferme, Gascourt</title>
+<meta name="theme-color" content="#2a78d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gascourt">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" href="icone-192.png" type="image/png">
+<style>
+  /* Palette catégorielle validée en mode clair, tous couples confrontés :
+     CVD ΔE 9,2 · vision normale ΔE 16,3. Chaque couleur est doublée du nom
+     du logement en toutes lettres, ce qui lève la réserve de contraste. */
+  :root{
+    color-scheme: light;
+    --page:#f4f5f7; --card:#ffffff; --line:#e6e9ee;
+    --ink:#111827; --ink-2:#4b5563; --ink-3:#8b93a1;
+    --accent:#2a78d6; --accent-soft:#eaf2fc;
+    --warn:#8a5a00; --warn-bg:#fdf4e3; --err:#a4241f; --err-bg:#fbecea;
+    --c0:#2a78d6; --c0bg:#eef4fd;
+    --c1:#1baf7a; --c1bg:#e9f7f1;
+    --c2:#4a3aa7; --c2bg:#eeecf8;
+    --c3:#eb6834; --c3bg:#fdf0ea;
+    /* les deux cadrans du compteur électrique, repris du calculateur d'origine */
+    --hc:#2a78d6; --hp:#eb6834;
+  }
+  /* L'électricité prend une teinte propre, pour qu'on sache d'un coup d'œil
+     de quel fluide on parle sans lire l'onglet. */
+  body[data-fluide="elec"]{ --accent:#b8720c; --accent-soft:#fdf3e4; }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--page); color:var(--ink);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px; margin:0 auto; padding:26px 20px 70px}
+  .num{font-variant-numeric:tabular-nums}
+
+  .head{background:var(--card); border:1px solid var(--line); border-radius:18px;
+        padding:22px 26px; margin-bottom:18px}
+  .hrow{display:flex; align-items:center; gap:18px}
+  .hrow.barre{margin-top:20px; gap:12px}
+  .drop{width:46px; height:46px; border-radius:12px; background:var(--accent); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-size:23px; flex:none;
+        transition:background .18s}
+  .head h1{font-size:29px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.15}
+  .head p{margin:0; color:var(--ink-2); font-size:14.5px; max-width:62ch}
+  .langs{margin-left:auto; display:flex; gap:6px; flex:none}
+  .langs button{border:1px solid var(--line); background:var(--card); color:var(--ink-2);
+    padding:7px 15px; border-radius:99px; font:inherit; font-size:13.5px; font-weight:600; cursor:pointer}
+  .langs button.on{background:var(--accent); border-color:var(--accent); color:#fff}
+
+  /* bascule entre les deux fluides : c'est elle qui commande toute la page */
+  .fluides{display:flex; gap:5px; background:var(--page); border:1px solid var(--line);
+    border-radius:99px; padding:4px; flex:none}
+  .fluides button{border:none; background:none; color:var(--ink-2); padding:7px 16px;
+    border-radius:99px; font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px}
+  .fluides button:hover{color:var(--ink)}
+  .fluides button.on{background:var(--card); color:var(--accent);
+    box-shadow:0 1px 3px rgba(17,24,39,.1)}
+
+  nav.tabs{display:flex; flex-wrap:wrap; gap:26px}
+  nav.tabs button{border:none; background:none; color:var(--ink-3); padding:9px 1px;
+    border-bottom:2px solid transparent; border-radius:0; font:inherit; font-size:15px;
+    font-weight:600; cursor:pointer}
+  nav.tabs button:hover{color:var(--ink-2)}
+  nav.tabs button.on{color:var(--accent); border-bottom-color:var(--accent)}
+
+  .block{background:var(--card); border:1px solid var(--line); border-radius:18px;
+         padding:22px 26px 26px; margin-bottom:18px}
+  .bhead{display:flex; align-items:center; gap:13px; margin-bottom:16px}
+  .badge{width:30px; height:30px; color:var(--accent); display:flex; align-items:center;
+         justify-content:center; flex:none}
+  .bhead h2{font-size:21px; margin:0 0 2px; letter-spacing:-.02em}
+  .bhead p{margin:0; color:var(--ink-3); font-size:13.5px}
+  .perio{display:grid; grid-template-columns:auto 1fr; gap:2px 11px; align-items:center;
+    margin:0 0 0 auto; padding:10px 15px; border:1px solid var(--line); border-radius:13px;
+    background:var(--card); cursor:pointer; text-transform:none; letter-spacing:0; min-width:340px}
+  .perio .ic{grid-row:1/3; color:var(--ink-3); display:flex}
+  .perio .lb{font-size:12px; color:var(--ink-3)}
+  .perio .ds{grid-column:2}
+  .perio .ds-b{border:none; background:none; padding:0; font-size:15px; font-weight:600}
+  .perio .ds-b:hover{background:none}
+  .perio:hover{border-color:var(--accent)}
+
+  th .mt{white-space:nowrap; opacity:.72; font-weight:500}
+  /* le nom de la facture garde ses mots ensemble tant que la place le permet */
+  table td:first-child{text-wrap:balance}
+  .tarifLigne{margin:0 0 14px; color:var(--ink-2); font-size:13.5px}
+  .tarifLigne a{color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent); margin-left:8px}
+  .total{display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin-top:16px; padding:14px 18px; background:var(--accent-soft); border-radius:12px}
+  .total span{font-size:13px; color:var(--ink-2); text-transform:uppercase; letter-spacing:.05em; font-weight:600}
+  .total b{font-size:24px; letter-spacing:-.02em}
+
+  .quad{display:grid; grid-template-columns:repeat(4,1fr); gap:13px}
+  @media(max-width:980px){.quad{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.quad{grid-template-columns:1fr}}
+  .lgt{border:1px solid var(--line); border-radius:13px; overflow:hidden;
+      background:var(--card); display:flex; flex-direction:column}
+  .lgt .top{display:flex; align-items:center; gap:9px; padding:12px 14px; border-bottom:1px solid var(--line)}
+  .lgt .ico{width:26px; height:26px; border-radius:7px; display:flex; align-items:center;
+           justify-content:center; font-size:14px; color:#fff; flex:none}
+  .lgt .top b{font-size:15px; letter-spacing:-.01em}
+  .lgt .body{padding:12px 14px; flex:1}
+  .kv{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; padding:4px 0;
+      align-items:baseline}
+  .kv span{color:var(--ink-3); min-width:0}
+  .kv b{font-weight:600; white-space:nowrap}
+  .kv.gras span{color:var(--ink)} .kv.gras b{font-weight:700}
+  /* dates de la période en tête de carte : sans libellé, il n'y a pas la place
+     pour les deux et l'un chevaucherait l'autre */
+  .datescarte{font-size:11.5px; color:var(--ink-3); margin:1px 0 7px}
+  .idx{display:flex; gap:8px; margin:9px 0 4px}
+  .idx>div{flex:1; background:var(--page); border:1px solid var(--line); border-radius:8px; padding:6px 9px}
+  .idx .lab{font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.05em}
+  .idx .v{font-size:13.5px; font-weight:600}
+  .lgt .foot{display:flex; border-top:1px solid var(--line); margin-top:auto}
+  .lgt .foot>div{flex:1; padding:10px 14px}
+  .lgt .foot>div+div{border-left:1px solid var(--line)}
+  .lgt .foot .lab{font-size:10.5px; color:var(--ink-2); text-transform:uppercase; letter-spacing:.05em}
+  .lgt .foot .v{font-size:16px; font-weight:700; letter-spacing:-.01em}
+  /* sous-compteur d'un logement, replié sous le compteur principal */
+  .souscpt{margin:8px 0 2px; padding:8px 10px; background:var(--page);
+    border:1px solid var(--line); border-radius:9px}
+  .cad{display:inline-flex; align-items:center; gap:5px}
+  .cad i{width:8px; height:8px; border-radius:50%; display:inline-block; flex:none}
+  .cad i.hc{background:var(--hc)} .cad i.hp{background:var(--hp)}
+
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{padding:13px 12px; text-align:right; border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:11px; color:#8b96ab; text-transform:uppercase; letter-spacing:.06em;
+     font-weight:600; padding-bottom:12px}
+  tbody tr:last-child td{border-bottom:none}
+  /* un montant ne se coupe pas : « 0,03085 » sur une ligne et « € » sur la
+     suivante se lit comme deux valeurs différentes */
+  td.num{white-space:nowrap}
+  tbody tr.cliquable{cursor:pointer}
+  tbody tr.cliquable:hover td{background:var(--accent-soft)}
+  tr.tot td{font-weight:700; background:var(--accent-soft); border:none}
+  tr.tot td:first-child{border-radius:10px 0 0 10px}
+  tr.tot td:last-child{border-radius:0 10px 10px 0}
+  .scroll{overflow-x:auto}
+  .msg{padding:11px 15px; border-radius:10px; font-size:14px; margin-bottom:12px}
+  .msg.warn{background:var(--warn-bg); color:var(--warn)}
+  .msg.err{background:var(--err-bg); color:var(--err)}
+  .msg.info{background:var(--accent-soft); color:var(--accent)}
+
+  label{display:block; font-size:11.5px; color:var(--ink-3); text-transform:uppercase;
+        letter-spacing:.05em; margin-bottom:4px}
+  textarea{resize:vertical; min-height:74px; line-height:1.45}
+  input,select,textarea{width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:9px;
+    background:var(--card); color:var(--ink); font:inherit; font-size:14px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent}
+  input[readonly]{background:var(--page); color:var(--ink-2)}
+  /* Menu déroulant maison : la liste native est rendue par le système et
+     n'accepte aucun style. Le <select> reste dans la page, masqué, pour que
+     le code existant continue de lire sa valeur. */
+  .ds{position:relative; width:100%}
+  .ds select{display:none}
+  .ds-b{width:100%; display:flex; align-items:center; gap:8px; text-align:left;
+    padding:9px 11px; border:1px solid var(--line); border-radius:9px; background:var(--card);
+    color:var(--ink); font:inherit; font-size:14px; cursor:pointer}
+  .ds-b:hover{border-color:var(--accent)}
+  .ds-b[aria-expanded="true"]{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .ds-b span{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .ds-b svg{flex:none; color:var(--ink-3); transition:transform .15s}
+  .ds-b[aria-expanded="true"] svg{transform:rotate(180deg)}
+  .ds-l{position:absolute; z-index:80; top:calc(100% + 5px); left:0; min-width:100%;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:5px;
+    box-shadow:0 14px 38px rgba(17,24,39,.16); max-height:280px; overflow:auto}
+  .ds-o{padding:8px 11px; border-radius:8px; font-size:14px; cursor:pointer;
+    display:flex; align-items:center; gap:8px; white-space:nowrap}
+  .ds-o:hover,.ds-o.sur{background:var(--accent-soft); color:var(--accent)}
+  .ds-o.on{font-weight:600}
+  .ds-o i{width:14px; flex:none; font-style:normal; color:var(--accent)}
+
+  .grid{display:grid; gap:12px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g5{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  @media(max-width:720px){.g2,.g4{grid-template-columns:1fr}}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px}
+  button.act{border:1px solid var(--accent); background:var(--accent); color:#fff;
+    padding:10px 20px; border-radius:99px; font:inherit; font-weight:600; font-size:14px; cursor:pointer}
+  button.act:hover{filter:brightness(1.07)}
+  button.ghost{border:1px solid var(--line); background:var(--card); color:var(--ink-2);
+    padding:10px 18px; border-radius:99px; font:inherit; font-size:14px; cursor:pointer}
+  button.ghost:hover{border-color:var(--accent); color:var(--accent)}
+  button.mini{border:1px solid var(--line); background:var(--card); color:var(--ink-3);
+    padding:4px 12px; border-radius:99px; font:inherit; font-size:12px; cursor:pointer}
+  button.mini:hover{border-color:var(--accent); color:var(--accent)}
+  h4{font-size:12px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.05em;
+     margin:24px 0 10px; font-weight:600}
+  .vide{color:var(--ink-3); font-size:14px; font-style:italic; padding:14px 0}
+  .signaler{margin:12px 0 0; font-size:12.5px}
+  .signal{display:flex; gap:12px; align-items:flex-start; background:var(--warn-bg);
+    border-radius:10px; padding:11px 14px; margin-bottom:8px; font-size:13.5px; color:var(--ink)}
+  .signal>div{flex:1}
+  .signal button{flex:none}
+  .signaler a{color:var(--ink-3); text-decoration:none; border-bottom:1px dotted var(--ink-3)}
+  .signaler a:hover{color:var(--accent); border-color:var(--accent)}
+  .import{border:1px dashed var(--line); border-radius:12px; padding:14px 16px; margin-bottom:18px}
+  .import textarea{margin-top:10px}
+  .voile{position:fixed; inset:0; z-index:60; background:rgba(17,24,39,.45);
+    display:flex; align-items:flex-start; justify-content:center; padding:44px 20px; overflow:auto}
+  .voile .panneau{background:var(--card); border-radius:18px; padding:24px 28px 28px;
+    width:100%; max-width:780px; box-shadow:0 24px 70px rgba(0,0,0,.28)}
+  .voile .panneau:has(.pdfvue){max-width:940px}
+  .pdfvue{width:100%; height:62vh; min-height:380px; border:1px solid var(--line);
+    border-radius:12px; background:var(--page)}
+
+  /* champs modifiables au fil du texte : discrets tant qu'on ne les touche pas */
+  .edit{border:1px solid transparent; background:transparent; padding:2px 5px; border-radius:6px;
+        font:inherit; color:inherit; width:auto}
+  .edit:hover{border-color:var(--line); background:rgba(255,255,255,.75)}
+  .edit:focus{background:var(--card); border-color:var(--accent); outline:none}
+  .edit.nom{font-size:15px; font-weight:700; letter-spacing:-.01em; flex:1; min-width:0}
+  .edit.surf{width:66px; text-align:right; font-weight:600; font-size:13.5px}
+  .edit.surf::-webkit-outer-spin-button,.edit.surf::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .englobe{margin:12px 0 0; color:var(--ink-2); font-size:13.5px}
+  .sep2{border-top:1px solid var(--line); margin:8px 0 6px}
+  .plus{border:1px solid var(--line); background:var(--card); color:var(--accent);
+    padding:9px 18px; border-radius:99px; font:inherit; font-size:14px; font-weight:600; cursor:pointer}
+  .plus:hover{border-color:var(--accent); background:var(--accent-soft)}
+  .bhead .plus{margin-left:auto}
+  .plus, .langs button{display:inline-flex; align-items:center; gap:7px}
+  .badge svg, .lgt .ico svg{display:block}
+
+  /* ── consommation dans le temps ─────────────────────── */
+  .hfiltres{display:flex; flex-wrap:wrap; align-items:center; gap:11px 22px; margin-bottom:18px}
+  .hf{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--ink-2); white-space:nowrap}
+  .hf .ds{width:auto; min-width:190px}
+  .seg{display:flex; gap:4px; background:var(--page); border:1px solid var(--line);
+    border-radius:99px; padding:3px}
+  .seg button{border:none; background:none; color:var(--ink-2); padding:6px 14px;
+    border-radius:99px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer}
+  .seg button.on{background:var(--card); color:var(--accent); box-shadow:0 1px 3px rgba(17,24,39,.1)}
+  .hnote{font-size:12.5px; color:var(--ink-3); flex:1 1 240px; min-width:0; white-space:normal}
+  .figure{margin:0 0 18px; display:flex; flex-direction:column; gap:12px}
+  .figure figcaption{font-size:13px; color:var(--ink-2); font-weight:700}
+  .legende{display:flex; flex-wrap:wrap; gap:7px 18px; font-size:12.5px; color:var(--ink-2)}
+  .lgd{display:flex; align-items:center; gap:7px}
+  .sw{width:11px; height:11px; border-radius:3px; flex:none}
+  .sw.hc{background:var(--hc)} .sw.hp{background:var(--hp)} .sw.u{background:var(--accent)}
+  .chart{position:relative; height:240px; padding:20px 0 46px 58px}
+  .cgrid{position:absolute; inset:20px 0 46px 58px; pointer-events:none}
+  .cgline{position:absolute; left:0; right:0; border-top:1px solid var(--line)}
+  .cgval{position:absolute; right:calc(100% + 9px); transform:translateY(-50%); font-size:10.5px;
+    color:var(--ink-3); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .cbars{position:relative; height:100%; display:flex; align-items:flex-end; gap:8px}
+  .cbar{position:relative; flex:1 1 0; min-width:0; height:100%; display:flex;
+    flex-direction:column; justify-content:flex-end}
+  .cstack{display:flex; flex-direction:column; justify-content:flex-end; height:100%;
+    max-width:72px; margin:0 auto; width:100%}
+  .cseg{width:100%; min-height:2px}
+  .cseg.hp{background:var(--hp); border-radius:5px 5px 0 0; margin-bottom:2px}
+  .cseg.hp.flush{margin-bottom:0}
+  .cseg.hc{background:var(--hc)}
+  .cseg.hc.solo{border-radius:5px 5px 0 0}
+  .cseg.u{background:var(--accent); border-radius:5px 5px 0 0}
+  .ctot{position:absolute; left:0; right:0; text-align:center; font-size:10.5px; font-weight:700;
+    color:var(--ink-2); font-variant-numeric:tabular-nums; pointer-events:none}
+  .clab{position:absolute; top:calc(100% + 8px); left:-3px; right:-3px; text-align:center;
+    font-size:10.5px; color:var(--ink-3); line-height:1.3; overflow-wrap:anywhere}
+  .cbar:hover .cstack{filter:brightness(1.1)}
+  .ctip{position:absolute; z-index:30; pointer-events:none; opacity:0; transform:translate(-50%,-100%);
+    background:var(--ink); color:#fff; border-radius:9px; padding:9px 12px; font-size:12.5px;
+    line-height:1.55; white-space:nowrap; box-shadow:0 10px 26px rgba(0,0,0,.3); transition:opacity .12s}
+  .ctip.on{opacity:1}
+  .ctip b{font-variant-numeric:tabular-nums}
+  .ctip .tk{display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:6px}
+
+  footer{color:var(--ink-3); font-size:12.5px; margin-top:26px}
+  #pied{display:flex; flex-direction:column; gap:14px; padding:4px 2px 0}
+  #pied a{color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent)}
+  #pied .impr{font-size:14px}
+  #pied details summary{cursor:pointer; font-weight:600; color:var(--ink-2);
+    list-style:none; padding:6px 0}
+  #pied details summary::-webkit-details-marker{display:none}
+  #pied details summary::before{content:"+ "; color:var(--accent); font-weight:700}
+  #pied details[open] summary::before{content:"− "}
+  #pied details .corps{border-top:1px solid var(--line); padding-top:12px; margin-top:4px}
+  #pied .auto{max-width:70ch}
+  #pied .englobe{margin:8px 0 0; max-width:70ch}
+  #pied .englobe.alerte{color:var(--warn)}
+  #pied input{max-width:none}
+  @media(max-width:640px){
+    .block{padding:20px 18px 22px; border-radius:14px}
+    .chart{height:215px; padding-left:48px} .cgrid{left:48px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none !important}}
+
+  /* ── document imprimé : construit à part, jamais l'écran plaqué sur du papier ── */
+  @page{ size:A4; margin:14mm 10mm 15mm; }
+  #impression{display:none}
+  #impression .ent{border-bottom:1.5pt solid #000; padding-bottom:7px; margin-bottom:15px}
+  #impression h1{font-size:15pt; margin:0 0 4px; letter-spacing:-.01em}
+  #impression .meta{font-size:8.5pt; color:#444; margin:0; line-height:1.5}
+  #impression h2{font-size:10.5pt; margin:17px 0 5px; padding-bottom:3px;
+    border-bottom:.75pt solid #999; text-transform:uppercase; letter-spacing:.06em}
+  #impression p{margin:6px 0}
+  #impression table{width:100%; border-collapse:collapse; font-size:9.5pt; margin:5px 0}
+  #impression thead{display:table-header-group}
+  #impression th{text-align:right; font-size:7.5pt; text-transform:uppercase; letter-spacing:.05em;
+    color:#444; border-bottom:.75pt solid #444; padding:4px 6px; font-weight:700}
+  #impression td{text-align:right; padding:4.5px 6px; border-bottom:.5pt solid #ddd}
+  #impression th:first-child, #impression td:first-child{text-align:left; white-space:normal}
+  #impression td.num, #impression th{white-space:nowrap}
+  #impression .large{font-size:8.5pt}
+  #impression .large td, #impression .large th{padding:4px 4px}
+  #impression tr.tot td{font-weight:700; border-top:1pt solid #000; border-bottom:none; padding-top:6px}
+  #impression tr.sec td{color:#555; font-style:italic}
+  #impression .cadre{border:1.2pt solid #000; padding:11px 15px; margin:14px 0; display:flex;
+    justify-content:space-between; align-items:baseline; gap:16px}
+  #impression .cadre span{font-size:10.5pt; font-weight:700}
+  #impression .cadre b{font-size:17pt; white-space:nowrap}
+  #impression .note{font-size:9pt; color:#333; margin:8px 0 0}
+  #impression .pied{margin-top:20px; padding-top:7px; border-top:.5pt solid #bbb;
+    font-size:8pt; color:#555; line-height:1.55}
+  #impression .saut{break-before:page}
+  /* Les cartes de la vue Répartition, telles quelles : quatre par rangée et
+     leurs couleurs. Sans print-color-adjust, le navigateur retire les aplats à
+     l'impression et les quatre logements deviennent indiscernables. */
+  #impression{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  /* Quatre cartes sur 190 mm : 44 mm chacune. La typographie est resserrée en
+     conséquence, sans quoi un index comme « 30 321 → 30 404 » passerait à la
+     ligne et l'entassement reviendrait. */
+  #impression .quad{display:grid; grid-template-columns:repeat(4,1fr); gap:3mm;
+    margin:3mm 0 5mm}
+  #impression .lgt{border:.5pt solid var(--line); border-radius:3mm; break-inside:avoid;
+    display:flex; flex-direction:column; overflow:hidden; background:#fff}
+  #impression .lgt .top{border-bottom:.5pt solid var(--line); padding:3px 5px;
+    display:flex; align-items:center; gap:5px}
+  #impression .lgt .ico{width:5mm; height:5mm; border-radius:1.5mm; color:#fff;
+    display:flex; align-items:center; justify-content:center; flex:none}
+  #impression .lgt .ico svg{width:3.2mm; height:3.2mm}
+  #impression .lgt .top b{font-size:9.5pt; letter-spacing:-.01em}
+  #impression .lgt .body{padding:4px 5px}
+  #impression .kv{display:flex; justify-content:space-between; gap:4px;
+    font-size:7.5pt; padding:1px 0; align-items:baseline}
+  #impression .kv span{color:#555} #impression .kv b{white-space:nowrap}
+  #impression .kv.gras span{color:#000}
+  #impression .souscpt{border:.5pt solid var(--line); background:var(--page);
+    padding:2px 4px; margin:3px 0}
+  #impression .datescarte{font-size:7pt; color:#555; margin:0 0 3px}
+  #impression .idx{display:flex; gap:5px; margin:4px 0 2px}
+  #impression .idx>div{flex:1; border:.5pt solid var(--line); background:var(--page); padding:3px 5px}
+  #impression .idx .lab{font-size:6.5pt; color:#555; text-transform:uppercase}
+  #impression .idx .v{font-size:8pt; font-weight:700}
+  #impression .sep2{border-top:.5pt solid #bbb; margin:4px 0 3px}
+  #impression .cad{display:inline-flex; align-items:center; gap:4px}
+  #impression .cad i{width:1.6mm; height:1.6mm; border-radius:50%; display:inline-block; flex:none}
+  #impression .cad i.hc{background:var(--hc)} #impression .cad i.hp{background:var(--hp)}
+  #impression .lgt .foot{border-top:.5pt solid var(--line); margin-top:auto; padding:3px 5px}
+  #impression .lgt .foot .lab{font-size:6.5pt; color:#555; text-transform:uppercase;
+    letter-spacing:.05em}
+  #impression .lgt .foot .v{font-size:11pt; font-weight:700}
+  #impression table, #impression .cadre, #impression h2{break-inside:avoid}
+  #impression h2{break-after:avoid}
+  @media print{
+    body{background:#fff}
+    .wrap{padding:0; max-width:none}
+    .wrap > *:not(#impression){display:none !important}
+    #impression{display:block; color:#000; font-size:10.5pt; line-height:1.45}
+  }
+</style>
+</head>
+<body data-fluide="eau">
+<div class="wrap">
+
+<div class="head">
+  <div class="hrow">
+    <div class="drop" id="i-drop"></div>
+    <h1 id="h-titre"></h1>
+    <div class="langs noprint">
+      <button id="b-fr" class="on" onclick="setLang('fr')">Français</button>
+      <button id="b-uk" onclick="setLang('uk')"><span id="i-globe"></span>Українська</button>
+    </div>
+  </div>
+  <div class="hrow barre noprint">
+    <div class="fluides" role="group" id="bascule">
+      <button type="button" data-fluide="eau" class="on"></button>
+      <button type="button" data-fluide="elec"></button>
+    </div>
+    <nav class="tabs">
+      <button data-vue="repartition" class="on"></button>
+      <button data-vue="conso"></button>
+      <button data-vue="donnees"></button>
+    </nav>
+    <button class="plus" id="rel-plus" style="margin-left:auto; flex:none"></button>
+    <button class="plus" id="fac-plus" style="flex:none"></button>
+  </div>
+</div>
+
+<div id="vue-repartition"></div>
+<div id="vue-conso" hidden></div>
+<div id="vue-donnees" hidden></div>
+<footer id="pied" class="noprint"></footer>
+<div id="impression"></div>
+<div id="modal" hidden></div>
+
+</div>
+
+<script>
+'use strict';
+const KEY = 'gascourt-v1';                  // stock propre : la page eau garde le sien intact
+const KEY_EAU = 'conso-eau-v1';             // ancien stock, lu une seule fois pour la reprise
+const $  = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,9);
+const TEINTES = [['--c0','--c0bg'],['--c1','--c1bg'],['--c2','--c2bg'],['--c3','--c3bg']];
+
+/* ── icônes, tracées plutôt qu'empruntées aux émojis du système ── */
+const SVG = {
+  goutte:'<path fill="currentColor" d="M12 3c3.6 4.4 5.6 7.3 5.6 10a5.6 5.6 0 1 1-11.2 0C6.4 10.3 8.4 7.4 12 3Z"/>',
+  eclair:'<path fill="currentColor" d="M13.4 2 4.6 13.9h5.7L9.2 22l9-12.2h-5.6L13.4 2Z"/>',
+  maison:'<path fill="currentColor" d="M12 3.2 3 10.3V20a1 1 0 0 0 1 1h5v-6h6v6h5a1 1 0 0 0 1-1v-9.7L12 3.2Z"/>',
+  calendrier:'<rect x="3.5" y="5.2" width="17" height="15.3" rx="2.2"/><path d="M3.5 10h17M8 3v4.4M16 3v4.4"/>',
+  liste:'<rect x="5.5" y="4.5" width="13" height="16" rx="2.2"/><path d="M9.2 3.2h5.6v3.1H9.2zM9 11h6M9 14.6h6M9 18.2h4"/>',
+  euro:'<path d="M17.5 6.8A6.6 6.6 0 0 0 7.4 12a6.6 6.6 0 0 0 10.1 5.2M4.4 10.4h8.4M4.4 13.6h8.4"/>',
+  courbe:'<path d="M4 4v16h16"/><path d="m7.2 15.4 3.6-4.2 3.1 2.6L20.2 7"/>',
+  barres:'<path d="M4 19V9.5M9.4 19V5M14.8 19v-6.4M20.2 19v-9"/>',
+  disque:'<path d="M5 4.5h11l3 3v12h-14z"/><path d="M8.6 4.5v5h6.8v-5M8.6 19.5v-6h6.8v6"/>',
+  alerte:'<path d="M12 4.3 3.1 19.7h17.8L12 4.3Z"/><path d="M12 10.2v4.4M12 17.1v.1"/>',
+  globe:'<circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.2 2.4 3.3 5.2 3.3 8.4S14.2 18 12 20.4C9.8 18 8.7 15.2 8.7 12S9.8 6 12 3.6Z"/>',
+  plus:'<path d="M12 5.6v12.8M5.6 12h12.8"/>',
+  immeuble:'<rect x="3.4" y="3.4" width="9.2" height="17.2" rx="1.6"/><rect x="12.6" y="9" width="8" height="11.6" rx="1.6"/><path d="M6.2 7.4h3.2M6.2 11h3.2M6.2 14.6h3.2M15.4 13h2.4M15.4 16.6h2.4"/>',
+  chevron:'<path d="m6.5 9.5 5.5 5.5 5.5-5.5"/>'
+};
+const ico = (n, px=15) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" `
+  + `stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" `
+  + `aria-hidden="true">${SVG[n]}</svg>`;
+
+/* ── traductions ─────────────────────────────────────── */
+const T = {
+fr:{
+ fEau:"Eau", fElec:"Électricité",
+ titreEau:"Répartition de la facture d'eau",
+ titreElec:"Répartition de la facture d'électricité",
+
+ tRepartition:"Répartition", tConso:"Consommation", tDonnees:"Relevés et factures",
+
+ fermer:"Fermer", clicModifier:"Cliquez pour modifier ou supprimer ce relevé",
+ clicVoir:"Cliquez pour voir cette facture", signaler:"Signaler une erreur",
+ signalerS:"Décrivez ce qui vous semble faux. Votre message sera lu par le propriétaire. Aucune donnée n'est modifiée.",
+ signalConcerne:"Facture concernée", signalAucune:"Aucune en particulier",
+ signalTexte:"Ce qui vous semble faux", signalEnvoyer:"Envoyer le signalement",
+ signalVide:"Décrivez le problème avant d'envoyer.", signalListe:"Signalements",
+ signalTraite:"Traité", imprimer:"Imprimer le décompte complet",
+ pageDonnees:"Sauvegarde et données",
+ pieAuto:"Vos données sont enregistrées automatiquement dans ce navigateur, à chaque modification. L'export ne sert qu'à en garder une copie ailleurs, sur une clé ou un autre ordinateur.",
+ tarifPeriode:"Le tarif de la période", prixMoyen:"Prix moyen",
+ partPeriode:"Part de la période relevée", joursSur:"{a} jours sur {b}",
+ joursHors:"Jours non couverts par une facture",
+ aucuneFacture:"Aucune facture enregistrée ne couvre cette période. Les prix de la plus récente, {f}, sont appliqués faute de mieux. Enregistrez la facture correspondante pour un calcul exact.",
+ joursHorsAlerte:"{n} jours de cette période ne sont couverts par aucune facture. Le tarif de la plus récente, {f}, leur est appliqué.",
+
+ jours:"jours", uEau:"m³", uElec:"kWh",
+ cadU:"Consommation", cadHC:"Heures creuses", cadHP:"Heures pleines",
+ cadHCcourt:"HC", cadHPcourt:"HP",
+ prixUnitEau:"Prix du m³ TTC", prixUnitElec:"Prix du kWh HT",
+ uHT:"HT", uTTC:"TTC", totalHT:"Total hors taxes",
+ compteurGen:"Compteur général", compteurGenFac:"Compteur général, facultatif",
+ sansGeneral:"Aucun index n'est saisi pour le compteur général sur cette période. Le total facturé est pris égal à la somme des sous-compteurs, et aucun écart n'est réparti.",
+
+ abonnement:"Abonnement", aboCta:"Abonnement et CTA", ctaComprise:"CTA comprise",
+ accise:"Taxe",
+ energie:"Énergie", eau:"Eau",
+ lesLogements:"Les quatre logements",
+
+ surface:"Surface", duAu:"Du {a} au {b}",
+ releveCompteur:"Relevé au compteur",
+ englobe:"Le compteur du {a} mesure aussi le {b} : ses {v} en sont déduits, sans quoi la même consommation serait facturée deux fois.",
+ consoPropre:"Consommation totale",
+ explEcartNeg:"Un écart inférieur à 3 % relève de la tolérance normale des appareils. Il est réparti entre les logements proportionnellement à leur consommation, chacun paie donc très légèrement moins que ce qu'indique son propre compteur.",
+ explEcartPos:"Cet excédent vient de la tolérance des appareils, de l'ordre de 2 % par compteur, et de tout ce qui serait alimenté sans passer par un sous-compteur. Il est réparti entre les logements proportionnellement à leur consommation.",
+ alerteEcartNeg:"L'écart négatif dépasse 3 %. Vérifiez les index, ou l'existence d'un branchement qui alimenterait un logement sans passer par le compteur général.",
+ alerteEcartPos:"L'écart représente plus de 30 % de la consommation mesurée dans les logements. À ce niveau, la tolérance des appareils ne suffit plus à l'expliquer : vérifiez les index, et cherchez ce qui pourrait être alimenté sans passer par un sous-compteur.",
+ partEcart:"Part de l'écart", volumeFacture:"Consommation facturée",
+ aRegler:"À régler", total:"Total", totalARegler:"Total à régler",
+
+ histTarifs:"Historique des tarifs",
+ facture:"Facture", dateFacture:"Date", periode:"Période facturée",
+ evolution:"Évolution", parAn:"Rythme annuel", ecart:"Écart",
+ saisieReleve:"Nouveau relevé", saisieFacture:"Nouvelle facture",
+ saisieFactureS:"La facture ne sert qu'à donner les prix. Ses dates n'ont pas besoin de coller aux relevés.",
+ dateReleve:"Date du relevé", indexRel:"Index des compteurs",
+ enregistrer:"Enregistrer", supprimer:"Supprimer", modifier:"Modifier",
+ confSupprFac:"Supprimer la facture « {x} » ? Les périodes qu'elle couvrait retomberont sur le tarif d'une autre facture.",
+ relevesEnr:"Relevés enregistrés", date:"Date",
+ libelle:"Libellé", debutPeriode:"Début de période", finPeriode:"Fin de période",
+ prixFac:"Les prix", periodeReleve:"Période relevée", consoDepuis:"Depuis le relevé précédent",
+ periodeInvalide:"Chiffres incohérents, voir le contrôle sous les relevés.",
+
+ champLitre:"Prix au litre hors abonnement, TTC", champM3:"Prix au m³ hors abonnement, TTC",
+ champHT:"Prix au m³ hors abonnement, HT", champTva:"TVA à appliquer au prix HT (%)",
+ champHC:"Prix du kWh en heures creuses, HT", champHP:"Prix du kWh en heures pleines, HT",
+ champAccise:"Taxe sur l'électricité, dite accise, € HT par kWh",
+ champCta:"CTA, contribution tarifaire d'acheminement, € HT",
+ champKva:"Puissance souscrite, kVA",
+ champMontant:"Montant total TTC de la facture", champVolume:"Consommation facturée par le fournisseur",
+ champAbo:"Abonnement, € HT", champAboTtc:"Abonnement et parts fixes, TTC",
+ aboSemestres:"Semestres couverts",
+ repartAbo:"Répartition de l'abonnement et des parts fixes",
+ rSurface:"Au prorata de la surface", rEgales:"En parts égales",
+ rConso:"Au prorata de la consommation", rManuel:"Parts fixées à la main", rAucune:"Non refacturé",
+ partsManuelles:"Parts de l'abonnement, en %", partsSomme:"Total des parts : {x} %",
+ partsPasCent:"Les parts ne totalisent pas 100 %. Ce qui manque reste à la charge du propriétaire.",
+ prixRetenu:"Prix retenu", sourceLitre:"d'après le prix au litre",
+ sourceTotal:"d'après le montant et le volume", sourceM3:"saisi à la main",
+ sourceHT:"d'après le prix HT majoré de {x} %",
+ errPrixManquant:"Renseignez au moins un prix, ou le montant total et le volume.",
+ exporter:"Exporter", importer:"Importer un fichier", effacer:"Tout effacer",
+ syncTitre:"Synchronisation entre appareils",
+ syncS:"Les données vivent dans un fichier d'un dépôt privé que vous possédez. Chaque appareil en garde une copie, travaille hors ligne, et les réunit dès qu'il retrouve le réseau. Le jeton reste sur cet appareil et ne part jamais dans un export.",
+ syncDepot:"Dépôt, sous la forme compte/nom", syncChemin:"Fichier dans le dépôt",
+ syncJetonChamp:"Jeton d'accès, avec droit d'écriture sur ce seul dépôt",
+ syncMaintenant:"Synchroniser maintenant", syncOublier:"Oublier cet appareil",
+ syncConfOubli:"Effacer le jeton et le dépôt de cet appareil ? Les données déjà présentes ici ne sont pas touchées.",
+ syncInactive:"Synchronisation inactive : cet appareil travaille seul.",
+ syncJamais:"Réglages enregistrés, aucune synchronisation encore faite.",
+ syncDernier:"Dernière synchronisation le {d}.",
+ syncEnCours:"Synchronisation en cours…",
+ syncFaite:"À jour. {a} enregistrements repris des autres appareils, {m} mis à jour.",
+ syncConflit:"Quelqu'un a écrit en même temps que vous, trois fois de suite. Vos données sont saines, réessayez dans un instant.",
+ syncJeton:"Le jeton est refusé ou expiré. Vérifiez qu'il donne le droit d'écriture sur ce dépôt.",
+ syncReseau:"Pas de réseau. Vous pouvez continuer à saisir, l'envoi se fera au prochain passage.",
+ sauvegardeLocale:"Copie de secours",
+ collerFichier:"Ou coller le contenu d'un fichier",
+ collerFichierS:"Si la fenêtre de choix de fichier grise le document, ouvrez-le dans un éditeur de texte, copiez tout, et collez ici.",
+ importerTexte:"Importer ce texte", collerVide:"Collez d'abord le contenu du fichier.",
+ reprendreEau:"Reprendre les données de la page eau",
+ reprendreEauS:"Va chercher les relevés et les factures enregistrés par l'ancienne page eau de ce navigateur, sans y toucher.",
+ reprisFait:"Reprise faite : {a} relevés et {f} factures ajoutés.",
+ reprisRien:"Aucune donnée de l'ancienne page eau n'a été trouvée dans ce navigateur.",
+ avertTva:"Dans le détail de la facture d'eau, la colonne « Prix unitaire » est hors taxes. Le chiffre juste est le prix au litre imprimé tout en bas.",
+ avertElec:"Les prix du kWh et l'abonnement se lisent hors taxes sur la facture EDF. La TVA est appliquée ensuite par l'outil.",
+
+ ctrlBloque:"Enregistrement refusé, il faut d'abord corriger :",
+ ctrlFutur:"Le relevé du {x} est daté dans le futur.",
+ ctrlDates:"Deux relevés portent la même date, ou les dates ne se suivent pas : {x}.",
+ ctrlRecul:"L'index de « {x} » recule : {a} au {da}, puis {b} au {db}. Un compteur ne revient pas en arrière. Corrigez la saisie, ou supprimez les relevés antérieurs si le compteur a été remplacé.",
+ ctrlInclut:"Du {da} au {db}, « {b} » a consommé {y} alors que « {a} », dont le compteur est censé l'englober, n'en compte que {x}. L'un des deux index est faux, ou le réglage du compteur englobant l'est.",
+ ctrlSousGeneral:"Du {da} au {db}, la somme des logements dépasse le compteur général de {p} %. Au-delà de 5 %, c'est une erreur de saisie plutôt qu'une tolérance d'appareil.",
+ ctrlSurGeneral:"Du {da} au {db}, le compteur général dépasse la somme des logements de {p} %. Vérifiez les index, ou ce qui serait alimenté sans passer par un sous-compteur.",
+ ctrlRythme:"Du {da} au {db}, la consommation ressort à {x} par an, contre {y} sur les autres périodes. Vérifiez qu'il ne manque pas un chiffre.",
+ ctrlIndexAbsent:"Du {da} au {db}, aucun index n'est saisi pour « {x} ». Sa consommation est comptée pour zéro sur cette période, ce qui fausse la répartition. Complétez les deux relevés, ou retirez ce compteur.",
+
+ avis:"Avis",
+ docSous:"Répartition entre quatre logements alimentés par un seul compteur général.",
+ avisPourQui:"Décompte individuel du logement {x}.",
+ etabliLe:"Établi le {d}",
+ avisDetail:"Détail du décompte",
+ avisPeriode:"Période du {a} au {b}, soit {j} jours.",
+ avisIndex:"Index du compteur au {d}", avisIndexCad:"Index {c} au {d}",
+ avisDeduit:"À déduire, {x} mesuré par ce même compteur",
+ avisPart:"Part de l'écart du compteur général",
+ avisConso:"Consommation, {v} à {p} €",
+ avisAbo:"Quote-part de l'abonnement et des parts fixes de {t} €",
+ avisAboSurface:"Quote-part de l'abonnement de {t} €, au prorata des surfaces, {s} m² sur {st} m²",
+ avisAboEgales:"Quote-part de l'abonnement de {t} €, en parts égales entre quatre logements",
+ avisAboConso:"Quote-part de l'abonnement de {t} €, au prorata de la consommation",
+ avisAboManuel:"Quote-part de l'abonnement de {t} €, part convenue de {p} %",
+ avisAccise:"Taxe sur l'électricité, {v} à {p} €",
+ avisTvaL:"TVA à {x} %", avisHT:"Sous-total hors taxes",
+ avisTotal:"Montant à régler",
+ avisPied:"Sur la période, le compteur général a relevé {g} et la somme des quatre logements {s}. La différence de {e} est répartie entre les logements proportionnellement à leur consommation. Prix issu de la {f}. Relevés de tous les compteurs et facture du fournisseur disponibles sur demande.",
+ avisPiedSansGen:"Sur la période, la répartition s'appuie sur les seuls sous-compteurs des logements, dont la somme est de {s}. Prix issu de la {f}. Relevés de tous les compteurs et facture du fournisseur disponibles sur demande.",
+
+ importFichier:"Choisir un fichier", relirePdf:"Relire le PDF joint",
+ relireFait:"Champs vides complétés depuis le PDF joint : {x}. Vérifiez avant d'enregistrer.",
+ relireRien:"Le PDF joint n'apporte rien de plus que ce qui est déjà saisi.",
+ importColler:"Collez ici le texte copié depuis la facture",
+ importLu:"Repris depuis la facture : {x}. Vérifiez avant d'enregistrer.",
+ importRien:"Aucun montant reconnu dans ce texte.",
+ importPdfMuet:"Ce PDF ne contient pas de texte, seulement des images. Ouvrez-le, sélectionnez tout, copiez, puis collez ci-dessous.",
+ importPdfCode:"Le texte de ce PDF est écrit avec une police à encodage propre, que je ne sais pas relire. Ouvrez le PDF, sélectionnez tout, copiez, puis collez ci-dessous : votre lecteur, lui, sait le déchiffrer.",
+ importPdfInconnu:"Texte lu, {n} caractères, mais aucun montant reconnu. Il apparaît ci-dessous : complétez les champs à la main.",
+ luLitre:"prix au litre", luFixe:"abonnement", luMontant:"montant total", luVolume:"consommation",
+ luPeriode:"période", luHC:"prix heures creuses", luHP:"prix heures pleines",
+ luAccise:"taxe sur l'électricité", luCta:"CTA", luKva:"puissance",
+ ligneTarifEau:"{j} jours · {p} € le m³ en moyenne, TTC · {a} d'abonnement",
+ ligneTarifElec:"{j} jours · {hc} € en heures creuses, {hp} € en heures pleines, hors taxes · {a} de parts fixes HT",
+ voirTarif:"d'où viennent ces prix", masquerTarif:"masquer le détail",
+ phraseEcart:"Le compteur général a relevé {g} contre {s} pour la somme des logements, soit {e} {sens}, {p} %.",
+ deMoins:"de moins", dePlus:"de plus",
+ pdfJoint:"Facture d'origine", pdfOuvrir:"Ouvrir dans un onglet",
+ pdfJoindre:"Joindre le PDF", pdfRemplacer:"Remplacer le PDF",
+ pdfAucun:"Aucun document n'est joint à cette facture.",
+ pdfTropGros:"Ce fichier dépasse 1,5 Mo. Il ne sera pas conservé, mais les montants ont été lus.",
+
+ rapprochTitre:"Rapprochement avec la facture",
+ rapprochFacture:"Total de la facture, TTC", rapprochReparti:"Réparti entre les logements",
+ rapprochReste:"Reste à votre charge", rapprochEncaisse:"Encaissé au-delà de la facture",
+ rapprochPlus:"L'écart tient aux {k} que la facture compte en plus de vos sous-compteurs, {vf} contre {vm}. Ces kWh sont valorisés au tarif de la période, taxe et TVA comprises. L'abonnement et la CTA sont répartis en entier et n'y contribuent pas.",
+ rapprochMoins:"Vos sous-compteurs mesurent {k} de plus que la facture, {vm} contre {vf}. Les locataires paient donc un peu plus que ce qu'EDF vous facture. L'abonnement et la CTA sont répartis en entier et n'y contribuent pas.",
+ rapprochCumul:"Cet écart ne s'accumule pas. Il vient pour l'essentiel du décalage entre vos dates de relevé et celles d'Enedis : les kWh qui sortent d'une période rentrent dans la suivante. Ce qui subsiste tient à la tolérance des compteurs, de l'ordre de 2 % chacun.",
+ rapprochPlusieurs:"Cette période est à cheval sur plusieurs factures. Leurs montants et le vôtre ne porteraient pas sur les mêmes jours : le rapprochement n'aurait pas de sens et n'est donc pas affiché.",
+ rapprochDecale:"La facture et vos relevés ne se recouvrent que sur {n} jours, alors que la facture en couvre {d} et votre période {p}. Les deux montants ne portent pas sur les mêmes jours, le rapprochement n'est donc pas affiché. Relevez vos compteurs aux dates d'EDF pour l'obtenir.",
+ rapprochSansVolume:"Renseignez la consommation facturée sur la facture pour connaître l'origine de cet écart.",
+ consoTitre:"Consommation dans le temps", consoVide:"Il faut au moins deux relevés pour tracer une courbe.",
+ suiviTitre:"Comparaison avec les factures",
+ suiviS:"Ce que le fournisseur facture, comparé à ce que mesurent vos sous-compteurs sur la même période.",
+ suiviVide:"Aucune facture enregistrée ne porte encore son nombre de kWh. Ouvrez-en une dans « Relevés et factures » et remplissez le champ « Consommation facturée par le fournisseur ». Réimporter le PDF de la facture le remplit tout seul.",
+ kwhFacture:"Facturé", kwhMesure:"Mesuré aux sous-compteurs", couverture:"Couverture",
+ suiviPartiel:"{n} jours sur {d}",
+ suiviPositif:"Le fournisseur facture {x} de plus que la somme de vos sous-compteurs, soit {p} %. En dessous de 3 % environ, la tolérance des appareils suffit à l'expliquer, chaque compteur ayant une marge propre. Au-delà, cherchez ce qui serait alimenté sans passer par un sous-compteur. Rien à répartir en plus dans tous les cas : la facture entière est déjà distribuée entre les logements.",
+ suiviNegatif:"Vos sous-compteurs mesurent {x} de plus que le fournisseur ne facture, soit {p} %. Un relevé estimé par le fournisseur explique souvent cet écart : il se corrigera à la facture suivante, sur relevé réel.",
+ suiviNeutre:"Facturation et sous-compteurs concordent à {p} % près.",
+ suiviProrata:"Les valeurs précédées de ≈ sont estimées : la facture ne tombe pas sur vos dates de relevé, la consommation mesurée est donc ramenée à sa période au prorata des jours, en supposant un rythme régulier. L'estimation se dégrade quand les deux périodes n'ont pas la même saison.",
+ fPart:"Logement", fGran:"Regroupement",
+ gPeriode:"Par période", gMois:"Par mois", gAnnee:"Par année", gTous:"Tous les logements",
+ granNote:"Une période à cheval sur deux mois est répartie au prorata des jours.",
+ capChart:"{q} · {u}, {g}",
+
+ errQuota:"L'espace de stockage du navigateur est plein. Exportez vos données, puis retirez le document d'une ancienne facture.",
+ errDeuxReleves:"Il faut au moins deux relevés pour calculer une consommation.",
+ errFacture:"Enregistrez d'abord une facture, elle donne les prix.",
+ errMemeReleve:"Les relevés de début et de fin doivent être différents.",
+ errOrdre:"Le relevé de début est postérieur au relevé de fin.",
+ errRecul:"L'index de « {x} » a diminué entre les deux relevés. Vérifiez la saisie, ou le remplacement du compteur.",
+ errInclut:"« {a} » a consommé plus que « {b} », dont le compteur est censé l'englober. Vérifiez les index ou le réglage des compteurs.",
+ errDate:"Indiquez une date.", errIndexManquant:"Index manquant ou négatif pour « {x} ».",
+ errDoublon:"Un relevé existe déjà au {x}.",
+ errPrixFou:"Le prix obtenu, {x} €, semble anormalement élevé. Vérifiez l'unité.",
+ errFichier:"Ce fichier n'est pas une sauvegarde valide.",
+ confSuppr:"Supprimer le relevé du {x} ?",
+ confFusion:"Fusionner ce fichier avec vos données ?\n\n{a} enregistrements à ajouter, {m} à mettre à jour, {i} déjà à jour ou plus anciens.\n\nRien ne sera supprimé.",
+ fusionFaite:"Fusion faite : {a} ajouts, {m} mises à jour.",
+ confReset:"Effacer tous les relevés, toutes les factures et les réglages, pour les deux fluides ?",
+},
+uk:{
+ fEau:"Вода", fElec:"Електрика",
+ titreEau:"Розподіл рахунку за воду",
+ titreElec:"Розподіл рахунку за електрику",
+
+ tRepartition:"Розподіл", tConso:"Споживання", tDonnees:"Показники та рахунки",
+
+ fermer:"Закрити", clicModifier:"Натисніть, щоб змінити або видалити цей показник",
+ clicVoir:"Натисніть, щоб переглянути цей рахунок", signaler:"Повідомити про помилку",
+ signalerS:"Опишіть, що здається вам помилковим. Ваше повідомлення прочитає власник. Жодні дані не змінюються.",
+ signalConcerne:"Рахунок, якого це стосується", signalAucune:"Жодного конкретно",
+ signalTexte:"Що здається помилковим", signalEnvoyer:"Надіслати повідомлення",
+ signalVide:"Опишіть проблему перед надсиланням.", signalListe:"Повідомлення",
+ signalTraite:"Опрацьовано", imprimer:"Друк повного розрахунку",
+ pageDonnees:"Резервна копія та дані",
+ pieAuto:"Ваші дані зберігаються в цьому браузері автоматично, після кожної зміни. Експорт потрібен лише для копії деінде, на флешці чи іншому комп'ютері.",
+ tarifPeriode:"Тариф періоду", prixMoyen:"Середня ціна",
+ partPeriode:"Частка виміряного періоду", joursSur:"{a} з {b} днів",
+ joursHors:"Дні, не охоплені жодним рахунком",
+ aucuneFacture:"Жоден збережений рахунок не охоплює цей період. За браком іншого застосовано ціни останнього рахунку: {f}. Збережіть відповідний рахунок для точного розрахунку.",
+ joursHorsAlerte:"{n} днів цього періоду не охоплені жодним рахунком. До них застосовано тариф останнього рахунку: {f}.",
+
+ jours:"днів", uEau:"м³", uElec:"кВт·год",
+ cadU:"Споживання", cadHC:"Нічний тариф", cadHP:"Денний тариф",
+ cadHCcourt:"Нічний", cadHPcourt:"Денний",
+ prixUnitEau:"Ціна за м³ із ПДВ", prixUnitElec:"Ціна за кВт·год без ПДВ",
+ uHT:"без ПДВ", uTTC:"із ПДВ", totalHT:"Разом без податків",
+ compteurGen:"Загальний лічильник", compteurGenFac:"Загальний лічильник, необов'язково",
+ sansGeneral:"За цей період показники загального лічильника не введено. Загальний обсяг береться як сума лічильників помешкань, розбіжність не розподіляється.",
+
+ abonnement:"Абонентська плата", aboCta:"Абонплата та внесок за передачу",
+ ctaComprise:"включно з внеском за передачу",
+ accise:"Податок",
+ energie:"Електроенергія", eau:"Вода",
+ lesLogements:"Чотири помешкання",
+
+ surface:"Площа", duAu:"З {a} по {b}",
+ releveCompteur:"За лічильником",
+ englobe:"Лічильник {a} враховує також {b}: його {v} віднімаються, інакше те саме споживання було б виставлене двічі.",
+ consoPropre:"Загальне споживання",
+ explEcartNeg:"Розбіжність менша за 3 % є нормальною похибкою приладів. Вона розподіляється між помешканнями пропорційно до їхнього споживання, тож кожне сплачує трохи менше, ніж показує його власний лічильник.",
+ explEcartPos:"Цей надлишок пояснюється похибкою приладів, близько 2 % на кожен лічильник, і всім, що живиться в обхід лічильників помешкань. Він розподіляється між помешканнями пропорційно до їхнього споживання.",
+ alerteEcartNeg:"Від'ємна розбіжність перевищує 3 %. Перевірте показники або наявність підключення, яке живить помешкання в обхід загального лічильника.",
+ alerteEcartPos:"Розбіжність перевищує 30 % виміряного в помешканнях споживання. На такому рівні похибка приладів її вже не пояснює: перевірте показники та пошукайте те, що живиться в обхід лічильників.",
+ partEcart:"Частка розбіжності", volumeFacture:"Обсяг до сплати",
+ aRegler:"До сплати", total:"Разом", totalARegler:"Разом до сплати",
+
+ histTarifs:"Історія тарифів",
+ facture:"Рахунок", dateFacture:"Дата", periode:"Період рахунку",
+ evolution:"Зміна", parAn:"Річний темп", ecart:"Розбіжність",
+ saisieReleve:"Новий показник", saisieFacture:"Новий рахунок",
+ saisieFactureS:"Рахунок потрібен лише для цін. Його дати не мусять збігатися з датами показників.",
+ dateReleve:"Дата зняття", indexRel:"Показники лічильників",
+ enregistrer:"Зберегти", supprimer:"Видалити", modifier:"Змінити",
+ confSupprFac:"Видалити рахунок «{x}»? Періоди, які він охоплював, перейдуть на тариф іншого рахунку.",
+ relevesEnr:"Збережені показники", date:"Дата",
+ libelle:"Назва", debutPeriode:"Початок періоду", finPeriode:"Кінець періоду",
+ prixFac:"Ціни", periodeReleve:"Виміряний період", consoDepuis:"Від попереднього показника",
+ periodeInvalide:"Показники суперечливі, див. перевірку під таблицею показників.",
+
+ champLitre:"Ціна за літр без абонплати, з ПДВ", champM3:"Ціна за м³ без абонплати, з ПДВ",
+ champHT:"Ціна за м³ без абонплати, без ПДВ", champTva:"ПДВ до ціни без податку (%)",
+ champHC:"Ціна кВт·год за нічним тарифом, без ПДВ", champHP:"Ціна кВт·год за денним тарифом, без ПДВ",
+ champAccise:"Податок на електрику, так званий акциз, € без ПДВ за кВт·год",
+ champCta:"Внесок за передачу (CTA), € без ПДВ",
+ champKva:"Договірна потужність, кВА",
+ champMontant:"Загальна сума рахунку з ПДВ", champVolume:"Обсяг, виставлений постачальником",
+ champAbo:"Абонентська плата, € без ПДВ", champAboTtc:"Абонплата та фіксовані частки, з ПДВ",
+ aboSemestres:"Охоплених семестрів",
+ repartAbo:"Розподіл абонплати та фіксованих часток",
+ rSurface:"Пропорційно до площі", rEgales:"Рівними частками",
+ rConso:"Пропорційно до споживання", rManuel:"Частки, встановлені вручну", rAucune:"Не перевиставляється",
+ partsManuelles:"Частки абонплати, у %", partsSomme:"Сума часток: {x} %",
+ partsPasCent:"Частки не складають 100 %. Різницю сплачує власник.",
+ prixRetenu:"Прийнята ціна", sourceLitre:"за ціною за літр",
+ sourceTotal:"із суми та обсягу", sourceM3:"введено вручну",
+ sourceHT:"за ціною без ПДВ, збільшеною на {x} %",
+ errPrixManquant:"Вкажіть щонайменше одну ціну або загальну суму та обсяг.",
+ exporter:"Експортувати", importer:"Імпортувати файл", effacer:"Стерти все",
+ syncTitre:"Синхронізація між пристроями",
+ syncS:"Дані зберігаються у файлі приватного сховища, яке належить вам. Кожен пристрій має свою копію, працює офлайн і об'єднує зміни, щойно з'явиться мережа. Токен залишається на цьому пристрої й ніколи не потрапляє в експорт.",
+ syncDepot:"Сховище, у вигляді обліковий-запис/назва", syncChemin:"Файл у сховищі",
+ syncJetonChamp:"Токен доступу з правом запису лише в це сховище",
+ syncMaintenant:"Синхронізувати зараз", syncOublier:"Забути цей пристрій",
+ syncConfOubli:"Стерти токен і сховище з цього пристрою? Наявні тут дані не зміняться.",
+ syncInactive:"Синхронізацію вимкнено: цей пристрій працює окремо.",
+ syncJamais:"Налаштування збережено, синхронізації ще не було.",
+ syncDernier:"Остання синхронізація: {d}.",
+ syncEnCours:"Синхронізація…",
+ syncFaite:"Актуально. {a} записів взято з інших пристроїв, {m} оновлено.",
+ syncConflit:"Хтось писав одночасно з вами, тричі поспіль. Ваші дані цілі, спробуйте за мить.",
+ syncJeton:"Токен відхилено або він прострочений. Перевірте право запису в це сховище.",
+ syncReseau:"Немає мережі. Можете далі вводити дані, надсилання відбудеться наступного разу.",
+ sauvegardeLocale:"Резервна копія",
+ collerFichier:"Або вставте вміст файлу",
+ collerFichierS:"Якщо вікно вибору файлу не дає обрати документ, відкрийте його в текстовому редакторі, скопіюйте все та вставте сюди.",
+ importerTexte:"Імпортувати цей текст", collerVide:"Спочатку вставте вміст файлу.",
+ reprendreEau:"Перенести дані зі сторінки води",
+ reprendreEauS:"Забирає показники та рахунки, збережені старою сторінкою води в цьому браузері, не змінюючи їх.",
+ reprisFait:"Перенесено: {a} показників і {f} рахунків.",
+ reprisRien:"У цьому браузері не знайдено даних старої сторінки води.",
+ avertTva:"У деталізації рахунку за воду колонка «Ціна за одиницю» подана без податків. Правильне число — ціна за літр, надрукована внизу.",
+ avertElec:"Ціни за кВт·год та абонплата в рахунку EDF подані без податків. ПДВ додає сам застосунок.",
+
+ ctrlBloque:"Збереження відхилено, спочатку виправте:",
+ ctrlFutur:"Показник за {x} датований майбутнім числом.",
+ ctrlDates:"Два показники мають однакову дату, або дати йдуть не по порядку: {x}.",
+ ctrlRecul:"Показник «{x}» зменшився: {a} на {da}, потім {b} на {db}. Лічильник не йде назад. Виправте введення або видаліть попередні показники, якщо лічильник замінили.",
+ ctrlInclut:"З {da} по {db} «{b}» спожив {y}, тоді як «{a}», лічильник якого має його охоплювати, налічує лише {x}. Один із двох показників хибний, або неправильне налаштування охоплюючого лічильника.",
+ ctrlSousGeneral:"З {da} по {db} сума помешкань перевищує загальний лічильник на {p} %. Понад 5 % — це радше помилка введення, ніж похибка приладу.",
+ ctrlSurGeneral:"З {da} по {db} загальний лічильник перевищує суму помешкань на {p} %. Перевірте показники або те, що живиться в обхід лічильників помешкань.",
+ ctrlRythme:"З {da} по {db} споживання становить {x} на рік проти {y} в інші періоди. Перевірте, чи не пропущено цифру.",
+ ctrlIndexAbsent:"З {da} по {db} для «{x}» не введено жодного показника. Його споживання враховано як нуль, що спотворює розподіл. Заповніть обидва показники або приберіть цей лічильник.",
+
+ avis:"Рахунок",
+ docSous:"Розподіл між чотирма помешканнями, які живить один загальний лічильник.",
+ avisPourQui:"Індивідуальний розрахунок для помешкання {x}.",
+ etabliLe:"Складено {d}",
+ avisDetail:"Деталізація розрахунку",
+ avisPeriode:"Період з {a} по {b}, тобто {j} днів.",
+ avisIndex:"Показник лічильника на {d}", avisIndexCad:"Показник, {c}, на {d}",
+ avisDeduit:"Відняти: {x}, виміряний цим самим лічильником",
+ avisPart:"Частка розбіжності загального лічильника",
+ avisConso:"Споживання, {v} по {p} €",
+ avisAbo:"Частка абонплати та фіксованих часток, {t} €",
+ avisAboSurface:"Частка абонплати {t} €, пропорційно до площі, {s} м² з {st} м²",
+ avisAboEgales:"Частка абонплати {t} €, рівними частками між чотирма помешканнями",
+ avisAboConso:"Частка абонплати {t} €, пропорційно до споживання",
+ avisAboManuel:"Частка абонплати {t} €, погоджена частка {p} %",
+ avisAccise:"Податок на електрику, {v} по {p} €",
+ avisTvaL:"ПДВ {x} %", avisHT:"Проміжна сума без податків",
+ avisTotal:"Сума до сплати",
+ avisPied:"За період загальний лічильник зафіксував {g}, а сума чотирьох помешкань — {s}. Різниця {e} розподіляється між помешканнями пропорційно до їхнього споживання. Ціна взята з рахунку: {f}. Показники всіх лічильників і рахунок постачальника надаються на запит.",
+ avisPiedSansGen:"За цей період розподіл спирається лише на лічильники помешкань, їхня сума — {s}. Ціна взята з рахунку: {f}. Показники всіх лічильників і рахунок постачальника надаються на запит.",
+
+ importFichier:"Вибрати файл", relirePdf:"Перечитати доданий PDF",
+ relireFait:"Порожні поля заповнено з доданого PDF: {x}. Перевірте перед збереженням.",
+ relireRien:"Доданий PDF не містить нічого, чого ще немає у формі.",
+ importColler:"Вставте сюди текст, скопійований із рахунку",
+ importLu:"Взято з рахунку: {x}. Перевірте перед збереженням.",
+ importRien:"У цьому тексті не розпізнано жодної суми.",
+ importPdfMuet:"Цей PDF не містить тексту, лише зображення. Відкрийте його, виділіть усе, скопіюйте та вставте нижче.",
+ importPdfCode:"Текст цього PDF записано шрифтом із власним кодуванням, якого я не можу прочитати. Відкрийте PDF, виділіть усе, скопіюйте та вставте нижче: ваша програма для перегляду вміє його розшифрувати.",
+ importPdfInconnu:"Текст прочитано, {n} символів, але жодної суми не розпізнано. Він показаний нижче: заповніть поля вручну.",
+ luLitre:"ціна за літр", luFixe:"абонплата", luMontant:"загальна сума", luVolume:"обсяг",
+ luPeriode:"період", luHC:"ціна нічного тарифу", luHP:"ціна денного тарифу",
+ luAccise:"податок на електрику", luCta:"внесок за передачу", luKva:"потужність",
+ ligneTarifEau:"{j} днів · {p} € за м³ у середньому, з ПДВ · {a} абонплати",
+ ligneTarifElec:"{j} днів · {hc} € нічний тариф, {hp} € денний тариф, без ПДВ · {a} фіксованих часток без ПДВ",
+ voirTarif:"звідки ці ціни", masquerTarif:"сховати деталі",
+ phraseEcart:"Загальний лічильник зафіксував {g} проти {s} за сумою помешкань, тобто на {e} {sens}, {p} %.",
+ deMoins:"менше", dePlus:"більше",
+ pdfJoint:"Оригінал рахунку", pdfOuvrir:"Відкрити у вкладці",
+ pdfJoindre:"Додати PDF", pdfRemplacer:"Замінити PDF",
+ pdfAucun:"До цього рахунку не додано документа.",
+ pdfTropGros:"Файл перевищує 1,5 МБ. Він не буде збережений, але суми прочитано.",
+
+ rapprochTitre:"Звірка з рахунком",
+ rapprochFacture:"Разом за рахунком, з ПДВ", rapprochReparti:"Розподілено між помешканнями",
+ rapprochReste:"Залишається на вас", rapprochEncaisse:"Зібрано понад рахунок",
+ rapprochPlus:"Різниця припадає на {k}, які рахунок налічує понад ваші лічильники, {vf} проти {vm}. Ці кВт·год оцінені за тарифом періоду, з податком і ПДВ. Абонплата та внесок за передачу розподілені повністю й не додають нічого.",
+ rapprochMoins:"Ваші лічильники показують на {k} більше, ніж рахунок, {vm} проти {vf}. Тож мешканці сплачують трохи більше, ніж виставляє EDF. Абонплата та внесок за передачу розподілені повністю й не додають нічого.",
+ rapprochCumul:"Ця різниця не накопичується. Здебільшого вона походить від розбіжності між датами ваших показників і датами Enedis: кВт·год, які виходять з одного періоду, потрапляють у наступний. Решта — похибка лічильників, близько 2 % на кожен.",
+ rapprochPlusieurs:"Цей період припадає на кілька рахунків. Їхні суми та ваша стосувалися б різних днів: звірка не мала б сенсу й не показується.",
+ rapprochDecale:"Рахунок і ваші показники перетинаються лише на {n} днів, тоді як рахунок охоплює {d}, а ваш період {p}. Суми стосуються різних днів, тому звірка не показується. Знімайте показники в дати EDF, щоб її отримати.",
+ rapprochSansVolume:"Вкажіть обсяг, виставлений у рахунку, щоб дізнатися походження цієї різниці.",
+ consoTitre:"Споживання в часі", consoVide:"Щоб побудувати графік, потрібно щонайменше два показники.",
+ suiviTitre:"Порівняння з рахунками",
+ suiviS:"Те, що виставляє постачальник, поряд із тим, що вимірюють ваші лічильники за той самий період.",
+ suiviVide:"Жоден збережений рахунок ще не містить кількості кВт·год. Відкрийте рахунок у розділі «Показники та рахунки» і заповніть поле «Обсяг, виставлений постачальником». Повторний імпорт PDF заповнює його автоматично.",
+ kwhFacture:"За рахунком", kwhMesure:"За лічильниками помешкань", couverture:"Охоплення",
+ suiviPartiel:"{n} з {d} днів",
+ suiviPositif:"Постачальник виставляє на {x} більше, ніж сума ваших лічильників, тобто {p} %. Менш ніж 3 % пояснюються похибкою приладів, бо кожен лічильник має власну похибку. Понад це — пошукайте те, що живиться в обхід лічильників. У будь-якому разі нічого додатково розподіляти не треба: увесь рахунок уже розподілений.",
+ suiviNegatif:"Ваші лічильники показують на {x} більше, ніж виставляє постачальник, тобто {p} %. Часто це означає, що рахунок виставлено за оціночними показниками: наступний рахунок за реальними показниками це виправить.",
+ suiviNeutre:"Рахунки та лічильники збігаються з точністю до {p} %.",
+ suiviProrata:"Значення зі знаком ≈ є оціночними: рахунок не збігається з датами ваших показників, тому виміряне споживання переноситься на його період пропорційно до днів, з припущенням рівномірного споживання. Оцінка гірша, коли періоди припадають на різні сезони.",
+ fPart:"Помешкання", fGran:"Групування",
+ gPeriode:"За періодами", gMois:"За місяцями", gAnnee:"За роками", gTous:"Усі помешкання",
+ granNote:"Період, що припадає на два місяці, розподіляється пропорційно до днів.",
+ capChart:"{q} · {u}, {g}",
+
+ errQuota:"Сховище браузера заповнене. Експортуйте дані, потім видаліть документ зі старого рахунку.",
+ errDeuxReleves:"Для обчислення споживання потрібно щонайменше два показники.",
+ errFacture:"Спочатку збережіть рахунок, він дає ціни.",
+ errMemeReleve:"Показники на початок і кінець мають бути різними.",
+ errOrdre:"Показник на початок пізніший за показник на кінець.",
+ errRecul:"Показник «{x}» зменшився між двома зняттями. Перевірте введення або заміну лічильника.",
+ errInclut:"«{a}» спожив більше, ніж «{b}», лічильник якого має його охоплювати. Перевірте показники або налаштування лічильників.",
+ errDate:"Вкажіть дату.", errIndexManquant:"Показник відсутній або від'ємний для «{x}».",
+ errDoublon:"Показник за {x} уже існує.",
+ errPrixFou:"Отримана ціна {x} € виглядає надто високою. Перевірте одиницю.",
+ errFichier:"Цей файл не є дійсною резервною копією.",
+ confSuppr:"Видалити показник за {x}?",
+ confFusion:"Об'єднати цей файл із вашими даними?\n\n{a} записів буде додано, {m} оновлено, {i} вже актуальні або старіші.\n\nНічого не буде видалено.",
+ fusionFaite:"Об'єднання виконано: {a} додано, {m} оновлено.",
+ confReset:"Стерти всі показники, рахунки та налаштування для обох ресурсів?",
+}};
+let LANG = localStorage.getItem(KEY+'-lang') || 'fr';
+const t = (k,vars) => {
+  let s = (T[LANG] && T[LANG][k]) || T.fr[k] || k;
+  if(vars) for(const v in vars) s = s.split('{'+v+'}').join(vars[v]);
+  return s;
+};
+
+/* ── les deux fluides ────────────────────────────────── */
+/* Tout ce qui les distingue tient ici : le nombre de cadrans du compteur, le
+   nom de l'unité, et la précision d'affichage. Le reste du programme ne
+   connaît que « le fluide en cours » et ne teste jamais lequel c'est, sauf
+   là où la facture elle-même diffère vraiment. */
+/* fixeEntier : l'abonnement se répartit-il en entier ou au prorata des jours ?
+   SAUR facture des semestres d'avance, sans rapport avec les dates de relevé :
+   il faut les ramener au jour. EDF facture la période qu'il vient de relever,
+   qui tombe dans une seule période de relevé : la découper au jour donnerait un
+   montant introuvable sur la facture, sans rien gagner en justesse. */
+/* suivi : afficher ou non la comparaison entre kWh facturés et kWh mesurés.
+   Réservée à l'électricité sur décision de la propriétaire, le dossier de l'eau
+   étant traité à part. Passer eau à true suffirait à l'activer là aussi. */
+const FLUIDES = {
+  eau:  {cadrans:['u'],        dec:3, decPrix:4, icone:'goutte', pref:'eau',  fixeEntier:false, suivi:false},
+  elec: {cadrans:['hc','hp'],  dec:0, decPrix:5, icone:'eclair', pref:'el',   fixeEntier:true,  suivi:true}
+};
+let FL = localStorage.getItem(KEY+'-fluide') || 'eau';
+const cadrans  = (f=FL) => FLUIDES[f].cadrans;
+const unite    = (f=FL) => t(f === 'eau' ? 'uEau' : 'uElec');
+const nomCadran = (c) => c === 'u' ? t('cadU') : c === 'hc' ? t('cadHC') : t('cadHP');
+const nomCadranCourt = (c) => c === 'u' ? t('cadU') : c === 'hc' ? t('cadHCcourt') : t('cadHPcourt');
+
+/* ── données de départ ───────────────────────────────────
+   Elles ne sont plus écrites ici mais dans donnees/gascourt.json, que
+   assembler.js insère à cet endroit. Deux raisons de les avoir sorties du
+   programme : plusieurs personnes ne peuvent pas modifier des données gravées
+   dans le code, chacune en aurait sa copie ; et publier le programme
+   publierait les consommations des locataires, qui sont des données
+   personnelles. L'assemblage sans données produit la même page, vide.
+
+   Les identifiants des logements sont ceux de l'ancienne page eau, pour que la
+   reprise de ses données se fasse sans table de correspondance. */
+const AMORCE = /*__DONNEES__*/{"logements":[],"compteurs":[],"releves":[],"factures":[],"parts":{"eau":{},"elec":{}}}/*__FIN__*/;
+
+/* Les parts de l'abonnement sont des accords, non des règles : elles vivent
+   avec les données, pas dans le programme. */
+const copie = x => JSON.parse(JSON.stringify(x));
+const DEFAULT_STATE = {
+  version: 1,
+  logements: copie(AMORCE.logements),
+  compteurs: copie(AMORCE.compteurs),
+  releves:   copie(AMORCE.releves),
+  factures:  copie(AMORCE.factures),
+  parts:     copie(AMORCE.parts),
+  signalements: [], supprimes: [],
+  calcul: {eau:{debut:'', fin:''}, elec:{debut:'', fin:''}}
+};
+
+let S = charger();
+function charger(){
+  try{
+    const b = JSON.parse(localStorage.getItem(KEY));
+    if(b && Array.isArray(b.logements) && b.logements.length){
+      b.compteurs = b.compteurs && b.compteurs.length ? b.compteurs
+                  : copie(AMORCE.compteurs);
+      b.releves   = b.releves   || [];
+      b.factures  = b.factures  || [];
+      b.parts     = b.parts     || JSON.parse(JSON.stringify(DEFAULT_STATE.parts));
+      b.signalements = b.signalements || [];
+      b.supprimes    = b.supprimes    || [];
+      b.calcul = b.calcul || {};
+      b.calcul.eau  = b.calcul.eau  || {debut:'', fin:''};
+      b.calcul.elec = b.calcul.elec || {debut:'', fin:''};
+      b.releves.sort((a,c)=> a.date < c.date ? -1 : 1);
+      b.factures.sort((a,c)=> (a.date||'') < (c.date||'') ? -1 : 1);
+      return b;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+const maintenant = () => new Date().toISOString();
+/* Chaque enregistrement porte sa date de dernière modification, et toute
+   suppression laisse une trace datée. Sans ça, fusionner deux fichiers venus
+   de deux ordinateurs ferait réapparaître ce que l'un des deux a effacé. */
+function marquer(o){ o.maj = maintenant(); return o; }
+function enterrer(type, id){
+  S.supprimes = (S.supprimes || []).filter(x=> !(x.type===type && x.id===id));
+  S.supprimes.push({type, id, maj:maintenant()});
+}
+/* L'écriture locale est immédiate et sûre ; l'envoi vers le dépôt partagé est
+   différé, parce qu'une saisie va par rafales et que chaque envoi est un commit.
+   sauver(true) écrit sans rien envoyer : c'est ce qu'emploie la fusion, qui
+   déclencherait sinon un envoi au milieu de son propre aller-retour. */
+function sauver(sansEnvoi){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ alert(t('errQuota')); }        // quota dépassé : on prévient au lieu de perdre en silence
+  if(!sansEnvoi && typeof programmerPoussee === 'function') programmerPoussee();
+}
+
+/* Fusion de deux états : pour chaque enregistrement on garde la version la plus
+   récente, et une suppression postérieure l'emporte sur une modification. */
+function fusionner(local, entrant){
+  const rap = {ajoutes:0, majs:0, ignores:0};
+  const tombes = {};
+  [...(local.supprimes||[]), ...(entrant.supprimes||[])].forEach(x=>{
+    const k = x.type+':'+x.id;
+    if(!tombes[k] || tombes[k] < x.maj) tombes[k] = x.maj;
+  });
+  const sortie = JSON.parse(JSON.stringify(local));
+  sortie.supprimes = Object.entries(tombes).map(([k,maj])=>{
+    const i = k.indexOf(':');
+    return {type:k.slice(0,i), id:k.slice(i+1), maj};
+  });
+  for(const nom of ['releves','factures','signalements','compteurs']){
+    const par = {};
+    (local[nom]||[]).forEach(o=> par[o.id] = o);
+    (entrant[nom]||[]).forEach(o=>{
+      const a = par[o.id];
+      if(!a){ par[o.id] = o; rap.ajoutes++; }
+      else if((o.maj||'') > (a.maj||'')){ par[o.id] = o; rap.majs++; }
+      else rap.ignores++;
+    });
+    sortie[nom] = Object.values(par).filter(o=>{
+      const x = tombes[nom+':'+o.id];
+      return !(x && x > (o.maj||''));
+    });
+  }
+  sortie.releves.sort((a,b)=> a.date<b.date?-1:1);
+  sortie.factures.sort((a,b)=> (a.date||'')<(b.date||'')?-1:1);
+  (entrant.logements||[]).forEach(le=>{
+    const ll = sortie.logements.find(x=>x.id===le.id);
+    if(ll && (le.maj||'') > (ll.maj||'')) Object.assign(ll, le);
+    else if(!ll) sortie.logements.push(le);
+  });
+  return {etat:sortie, rap};
+}
+
+/* Reprise de l'ancienne page eau : ses relevés portaient un index par logement
+   sans notion de cadran, ses factures ne portaient pas de fluide. On convertit
+   sans jamais écrire dans son stock à elle. */
+function convertirAncienneEau(b){
+  const rel = (b.releves||[]).map(r=>{
+    const index = {};
+    for(const k in (r.index||{})) index['eau:'+k] = {u:r.index[k]};
+    return {id:r.id, fluide:'eau', date:r.date, index, maj:r.maj};
+  });
+  const fac = (b.factures||[]).map(f=> Object.assign({}, f, {fluide:'eau'}));
+  const logs = (b.logements||[]).map(l=>({id:l.id, nom:l.nom, surface:l.surface, maj:l.maj}));
+  const cpts = (b.logements||[]).map(l=>({id:'eau:'+l.id, fluide:'eau', logement:l.id,
+    nom:l.nom, inclut: l.inclut ? 'eau:'+l.inclut : null, maj:l.maj}));
+  return {logements:logs, compteurs:cpts, releves:rel, factures:fac,
+          signalements:(b.signalements||[]).map(g=>Object.assign({fluide:'eau'},g)),
+          supprimes:b.supprimes||[]};
+}
+
+/* Un PDF est conservé en base64 dans l'état ; il faut le repasser en blob pour l'afficher. */
+function blobPdf(d){
+  const [entete, b64] = String(d).split(',');
+  const type = (entete.match(/:(.*?);/) || [])[1] || 'application/pdf';
+  const bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], {type});
+}
+let urlPdf = null;
+function libererPdf(){ if(urlPdf){ URL.revokeObjectURL(urlPdf); urlPdf = null; } }
+
+/* ── formats ─────────────────────────────────────────── */
+const loc = () => LANG === 'uk' ? 'uk-UA' : 'fr-FR';
+const nf  = (v,d=2) => (v==null||isNaN(v)) ? '—'
+  : v.toLocaleString(loc(),{minimumFractionDigits:d, maximumFractionDigits:d});
+const eur = v => nf(v,2) + ' €';
+/* une quantité s'écrit toujours avec l'unité du fluide, jamais un nombre nu */
+const qte = (v, f=FL, d) => nf(v, d==null ? FLUIDES[f].dec : d) + ' ' + unite(f);
+const dateFr = iso => { if(!iso) return '—'; const [a,m,j]=iso.split('-'); return `${j}/${m}/${a}`; };
+const jours = (a,b) => { const p=s=>Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10));
+  return Math.round((p(b)-p(a))/86400000); };
+const num = el => { const v = parseFloat(String(el.value).replace(',','.')); return isNaN(v)?null:v; };
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const logementsDe = () => S.logements;
+const compteursDe = (f=FL) => S.compteurs.filter(c=> c.fluide === f);
+const generalDe   = (f=FL) => S.compteurs.find(c=> c.fluide === f && c.logement === null);
+const compteursDu = (idLog, f=FL) => S.compteurs.filter(c=> c.fluide === f && c.logement === idLog);
+const compteurPar = id => S.compteurs.find(c=> c.id === id);
+const nomDe = id => (compteurPar(id) || {}).nom || '?';
+const relevesDe  = (f=FL) => S.releves.filter(r=> r.fluide === f).sort((a,b)=> a.date<b.date?-1:1);
+const facturesDe = (f=FL) => S.factures.filter(x=> x.fluide === f)
+  .sort((a,b)=> (a.date||'')<(b.date||'')?-1:1);
+
+/* index d'un compteur pour un cadran, absent vaut « non relevé » et non zéro */
+const idx = (r, cpt, cad) => {
+  const o = r && r.index && r.index[cpt];
+  return o && o[cad] != null ? o[cad] : null;
+};
+/* Le compteur général est facultatif côté électricité : Victoria ne l'a jamais
+   relevé. Sans lui, le total facturé est la somme des sous-compteurs et il n'y
+   a pas d'écart à répartir. */
+function generalReleve(A, B, f=FL){
+  const g = generalDe(f);
+  if(!g) return false;
+  return cadrans(f).every(c=> idx(A,g.id,c) != null && idx(B,g.id,c) != null);
+}
+
+/* Répartit un total au centime près : la somme des parts arrondies redonne
+   exactement le total, les centimes restants vont aux plus fortes décimales. */
+function arrondirSomme(vals, d=2){
+  const f=Math.pow(10,d), brut=vals.map(v=>v*f), bas=brut.map(Math.floor);
+  let reste = Math.round(brut.reduce((a,b)=>a+b,0)) - bas.reduce((a,b)=>a+b,0);
+  const ordre = brut.map((v,i)=>({i,r:v-bas[i]})).sort((a,b)=>b.r-a.r);
+  for(let k=0;k<reste&&k<ordre.length;k++) bas[ordre[k].i]++;
+  return bas.map(v=>v/f);
+}
+
+/* ── ce que dit une facture ──────────────────────────── */
+/* Tout le calcul se mène en TTC, et une seule fois. Le hors taxes n'est pas
+   une autre grandeur, c'est le TTC divisé par un plus le taux : comme toutes
+   les composantes d'une même facture portent le même taux, la division est
+   exacte et le décompte imprimé peut afficher les deux sans jamais diverger. */
+const tauxTva = f => (f && f.tva != null) ? f.tva : (f && f.fluide === 'elec' ? 20 : 7.63);
+
+/* Prix TTC de l'unité pour un cadran, hors abonnement et hors accise.
+   Pour l'eau, par ordre de fiabilité : le prix au litre imprimé sur la facture,
+   sinon le montant total moins l'abonnement divisé par le volume, sinon le prix
+   saisi à la main, sinon le prix hors taxes majoré. */
+function prixDe(f, cad){
+  if(!f) return 0;
+  if(f.fluide === 'elec'){
+    const p = f.pu && f.pu[cad];
+    return p > 0 ? p * (1 + tauxTva(f)/100) : 0;
+  }
+  if(f.litre > 0) return f.litre*1000;
+  if(f.volume > 0 && f.montant > 0) return Math.max(0, f.montant - (f.fixe||0))/f.volume;
+  if(f.prix > 0) return f.prix;
+  if(f.ht > 0)   return f.ht * (1 + tauxTva(f)/100);
+  return 0;
+}
+function sourcePrix(f){
+  if(!f) return '';
+  // côté électricité le prix affiché est celui de la facture, sans conversion
+  if(f.fluide === 'elec') return t('sourceM3');
+  if(f.litre > 0) return t('sourceLitre');
+  if(f.volume > 0 && f.montant > 0) return t('sourceTotal');
+  if(f.prix > 0) return t('sourceM3');
+  return f.ht > 0 ? t('sourceHT',{x:nf(tauxTva(f),2)}) : '';
+}
+/* Accise TTC par unité. L'eau n'en a pas : sa taxe est déjà dans le prix au litre. */
+const acciseDe = f => (f && f.fluide === 'elec' && f.accise > 0)
+  ? f.accise * (1 + tauxTva(f)/100) : 0;
+/* Parts fixes TTC de la facture : abonnement, et pour l'électricité la CTA. */
+function fixeDe(f){
+  if(!f) return 0;
+  if(f.fluide === 'elec') return ((f.abo||0) + (f.cta||0)) * (1 + tauxTva(f)/100);
+  return f.fixe || 0;
+}
+/* Durée réellement couverte par l'abonnement. L'eau facture des semestres
+   d'avance, sans rapport avec la période de consommation : la facture de
+   février 2026 porte deux semestres sur 323 jours de consommation. L'électricité
+   facture l'abonnement de la période elle-même. */
+function joursAbo(f){
+  if(!f) return 1;
+  if(f.fluide === 'elec') return (f.debut && f.fin && jours(f.debut,f.fin)) || 61;
+  return (f.semestres || 2) * 182.5;
+}
+const tauxAbo = f => (!f || f.fixeMode === 'aucune') ? 0 : fixeDe(f) / joursAbo(f);
+const modeFixe = f => (f && f.fixeMode) || 'egales';
+
+/* ── prix tels qu'ils sont écrits sur la facture ─────── */
+/* Le moteur travaille en TTC de bout en bout, mais EDF imprime des prix hors
+   taxes : afficher 0,12084 € là où la facture dit 0,1007 € rend le décompte
+   invérifiable par le locataire. Côté électricité on affiche donc le hors
+   taxes, et la TVA prend sa propre ligne, comme sur la facture. L'eau, elle,
+   se saisit et s'affiche en TTC. */
+const enHT      = fl => fl === 'elec';
+const mention   = fl => t(enHT(fl) ? 'uHT' : 'uTTC');
+const prixAff   = (f, cad) => enHT(f.fluide) ? ((f.pu && f.pu[cad]) || 0) : prixDe(f, cad);
+const acciseAff = f => enHT(f.fluide) ? (f.accise || 0) : acciseDe(f);
+const fixeAff   = f => enHT(f.fluide) ? ((f.abo||0) + (f.cta||0)) : fixeDe(f);
+const versAff   = (r, v) => enHT(r.fluide) ? v/(1 + r.TP.tva/100) : v;
+
+/* Décomposition affichable d'un logement, exprimée dans la même base que la
+   facture. La somme des composantes redonne exactement le total à régler :
+   l'énergie absorbe le centime d'arrondi, sinon le locataire additionne la
+   colonne et ne retombe pas sur le total. */
+function pieces(r, l){
+  const ht = enHT(r.fluide);
+  const k  = ht ? 1/(1 + r.TP.tva/100) : 1;
+  const sousTotal = Math.round(l.montant*k*100)/100;
+  const pf  = Math.round(l.partFixe*k*100)/100;
+  const acc = Math.round(l.accise*k*100)/100;
+  const ene = Math.round((sousTotal - pf - acc)*100)/100;
+  return {ht, ene, acc, pf, sousTotal, tva: l.montant - sousTotal, total: l.montant};
+}
+
+/* Recouvrement en jours entre deux intervalles de dates ISO. */
+function recouvre(a,b,c,d){
+  const deb = a > c ? a : c, fin = b < d ? b : d;
+  return fin > deb ? jours(deb,fin) : 0;
+}
+
+/* ── tarif d'une période relevée ─────────────────────── */
+/* Moyenne des prix pondérée par le nombre de jours que chaque facture recouvre,
+   et abonnement au prorata des jours retenus. Sans cela une période à cheval
+   sur deux factures se voit appliquer le prix de l'une seulement, et
+   l'abonnement entier d'une facture même sur quinze jours. */
+/* Chaque facture confie ses parts fixes à une seule période de relevé, celle
+   qu'elle recouvre le plus. L'abonnement se lit alors sur le décompte tel qu'il
+   est imprimé sur la facture, et il n'est ni compté deux fois ni oublié quand
+   les dates de relevé et de facturation ne coïncident pas. */
+function porteurDesPartsFixes(fl){
+  const per = periodesMesurees(fl), out = {};
+  for(const f of facturesDe(fl)){
+    if(!f.debut || !f.fin) continue;
+    let meilleure = null, large = 0;
+    for(const p of per){
+      const n = recouvre(p.A.date, p.B.date, f.debut, f.fin);
+      if(n > large){ large = n; meilleure = p; }
+    }
+    if(meilleure) out[f.id] = meilleure.A.id + '_' + meilleure.B.id;
+  }
+  return out;
+}
+
+function tarifPeriode(fl, A, B){
+  const d = jours(A.date, B.date);
+  const fs = facturesDe(fl);
+  if(!fs.length || d <= 0) return null;
+  const cads = cadrans(fl);
+  const entier = FLUIDES[fl].fixeEntier;
+  const porteur = entier ? porteurDesPartsFixes(fl) : null;
+  const ici = A.id + '_' + B.id;
+  const cumul = {}; cads.forEach(c=> cumul[c] = 0);
+  let cumulAccise = 0, couv = 0, abo = 0;
+  const parts = [];
+  for(const f of fs){
+    if(!f.debut || !f.fin) continue;
+    const n = recouvre(A.date, B.date, f.debut, f.fin);
+    if(n <= 0) continue;
+    const q = entier
+      ? (f.fixeMode === 'aucune' || porteur[f.id] !== ici ? 0 : fixeDe(f))
+      : tauxAbo(f) * n;
+    cads.forEach(c=> cumul[c] += prixDe(f,c)*n);
+    cumulAccise += acciseDe(f)*n;
+    couv += n; abo += q;
+    parts.push({f, n, part:n/d, abo:q});
+  }
+  if(!parts.length){                      // aucune facture datée ne recouvre : la plus récente
+    const f = fs[fs.length-1];
+    const pu = {}; cads.forEach(c=> pu[c] = prixDe(f,c));
+    return {pu, accise:acciseDe(f), abo: f.fixeMode==='aucune' ? 0 : fixeDe(f),
+            parts:[], F:f, hors:d, tva:tauxTva(f)};
+  }
+  const ref = parts[parts.length-1];
+  let aboHors = 0;
+  if(couv < d){                                // jours hors facture : dernier tarif connu
+    cads.forEach(c=> cumul[c] += prixDe(ref.f,c)*(d-couv));
+    cumulAccise += acciseDe(ref.f)*(d-couv);
+    // les parts fixes attribuées en entier ne se prolongent pas : la facture qui
+    // couvrira ces jours apportera les siennes, sur sa propre période
+    aboHors = entier ? 0 : tauxAbo(ref.f)*(d-couv);
+    abo += aboHors;
+  }
+  const pu = {}; cads.forEach(c=> pu[c] = cumul[c]/d);
+  return {pu, accise:cumulAccise/d, abo, aboHors, entier,
+          parts, F:ref.f, hors:d-couv, tva:tauxTva(ref.f)};
+}
+
+/* ── calcul d'une période ────────────────────────────── */
+function calculer(fl, idA, idB){
+  const R = relevesDe(fl);
+  const A = R.find(r=>r.id===idA), B = R.find(r=>r.id===idB);
+  if(!A || !B) return {erreur:t('errDeuxReleves')};
+  if(A.id === B.id)   return {erreur:t('errMemeReleve')};
+  if(A.date > B.date) return {erreur:t('errOrdre')};
+  const TP = tarifPeriode(fl, A, B);
+  if(!TP || !TP.F) return {erreur:t('errFacture')};
+  const F = TP.F, cads = cadrans(fl);
+
+  // consommation brute de chaque compteur, cadran par cadran
+  const brut = {};
+  for(const c of compteursDe(fl)){
+    brut[c.id] = {};
+    for(const cad of cads){
+      const a = idx(A,c.id,cad), b = idx(B,c.id,cad);
+      brut[c.id][cad] = (a==null || b==null) ? null : b - a;
+      if(brut[c.id][cad] != null && brut[c.id][cad] < 0)
+        return {erreur:t('errRecul',{x:nomDe(c.id)})};
+    }
+  }
+  const hasGen = generalReleve(A, B, fl);
+  const G = generalDe(fl);
+
+  const zero = () => { const o={}; cads.forEach(c=>o[c]=0); return o; };
+  const lignes = logementsDe().map(l=>{
+    const cpts = compteursDu(l.id, fl).map(c=>{
+      const delta = zero(), ded = zero(), net = zero();
+      cads.forEach(cad=>{
+        delta[cad] = brut[c.id] && brut[c.id][cad] != null ? brut[c.id][cad] : 0;
+        ded[cad]   = c.inclut && brut[c.inclut] && brut[c.inclut][cad] != null ? brut[c.inclut][cad] : 0;
+        net[cad]   = delta[cad] - ded[cad];
+      });
+      return {id:c.id, nom:c.nom, inclut:c.inclut, delta, ded, net};
+    });
+    const propre = zero();
+    cpts.forEach(c=> cads.forEach(cad=> propre[cad] += c.net[cad]));
+    return {id:l.id, nom:l.nom, surface:l.surface||0, cpts, propre,
+            brut:  cpts.reduce((s,c)=>{ cads.forEach(cad=> s[cad]+=c.delta[cad]); return s; }, zero()),
+            deduction: cpts.reduce((s,c)=>{ cads.forEach(cad=> s[cad]+=c.ded[cad]); return s; }, zero())};
+  });
+  for(const li of lignes)
+    for(const cad of cads)
+      if(li.propre[cad] < -0.0005){
+        const c = li.cpts.find(x=>x.inclut);
+        return {erreur:t('errInclut',{a:esc(li.nom), b:esc(nomDe(c ? c.inclut : ''))})};
+      }
+
+  const somme = zero();
+  lignes.forEach(l=> cads.forEach(cad=> somme[cad] += l.propre[cad]));
+  const general = zero(), ecart = zero();
+  cads.forEach(cad=>{
+    general[cad] = hasGen ? brut[G.id][cad] : somme[cad];
+    ecart[cad]   = general[cad] - somme[cad];
+  });
+
+  // l'écart se répartit cadran par cadran : mélanger des heures creuses et des
+  // heures pleines reviendrait à facturer les unes au prix des autres
+  lignes.forEach(l=>{
+    l.part = zero(); l.facture = zero();
+    cads.forEach(cad=>{
+      l.part[cad] = somme[cad] > 0 ? ecart[cad]*l.propre[cad]/somme[cad] : ecart[cad]/lignes.length;
+      l.facture[cad] = l.propre[cad] + l.part[cad];
+    });
+    l.totalPropre  = cads.reduce((s,c)=> s+l.propre[c], 0);
+    l.totalFacture = cads.reduce((s,c)=> s+l.facture[c], 0);
+  });
+  const sommeTot   = cads.reduce((s,c)=> s+somme[c], 0);
+  const generalTot = cads.reduce((s,c)=> s+general[c], 0);
+  const ecartTot   = generalTot - sommeTot;
+  const pct = sommeTot > 0 ? ecartTot/sommeTot*100 : 0;
+
+  const alertes = [];
+  /* Une période sans facture n'est pas une erreur, mais le prix appliqué est
+     alors une extrapolation. Le dire ici et non seulement dans le détail replié :
+     personne ne déplie un tableau dont il ignore qu'il contient un avertissement. */
+  if(!TP.parts.length) alertes.push({t:'warn', m:t('aucuneFacture',{f:esc(F.libelle)})});
+  else if(TP.hors > 0) alertes.push({t:'info', m:t('joursHorsAlerte',{n:TP.hors, f:esc(F.libelle)})});
+  if(hasGen){
+    if(ecartTot < 0 && pct <= -3) alertes.push({t:'warn', m:t('alerteEcartNeg')});
+    else if(pct > 30)             alertes.push({t:'warn', m:t('alerteEcartPos')});
+  }else alertes.push({t:'info', m:t('sansGeneral')});
+
+  // parts fixes : abonnement, et CTA côté électricité
+  const mode = modeFixe(F), fixe = TP.abo;
+  const surfTot = lignes.reduce((s,l)=>s+l.surface,0);
+  const partsM  = (S.parts && S.parts[fl]) || {};
+  const partManuelle = l => (partsM[l.id] || 0)/100;
+  lignes.forEach(l=>{
+    l.cleFixe = mode === 'egales'  ? 1/lignes.length
+              : mode === 'surface' ? (surfTot>0 ? l.surface/surfTot : 1/lignes.length)
+              : mode === 'prorata' ? (sommeTot+ecartTot>0 ? l.totalFacture/(sommeTot+ecartTot) : 1/lignes.length)
+              : mode === 'manuel'  ? partManuelle(l)
+              : 0;
+    l.partFixe = fixe * l.cleFixe;
+    l.energie  = cads.reduce((s,cad)=> s + l.facture[cad]*TP.pu[cad], 0);
+    l.accise   = l.totalFacture * TP.accise;
+  });
+  const montants = arrondirSomme(lignes.map(l=> l.energie + l.accise + l.partFixe));
+  lignes.forEach((l,i)=>{
+    l.montant = montants[i];
+    l.montantHT = l.montant / (1 + TP.tva/100);
+    l.montantTva = l.montant - l.montantHT;
+  });
+
+  const cleTotale = lignes.reduce((s,l)=>s+l.cleFixe,0);
+  return {fluide:fl, A, B, F, TP, lignes, cads, hasGen,
+          general, somme, ecart, generalTot, sommeTot, ecartTot, pct,
+          fixe, mode, surfTot, cleTotale, alertes,
+          nbJours: jours(A.date,B.date),
+          totalRefacture: montants.reduce((a,b)=>a+b,0)};
+}
+
+/* Toutes les périodes entre deux relevés consécutifs. Celles dont les chiffres
+   ne tiennent pas debout sont conservées et marquées, jamais escamotées : une
+   période qui disparaît sans explication passe pour un bug. */
+function periodesMesurees(fl=FL){
+  const out = [], tri = relevesDe(fl), cads = cadrans(fl);
+  for(let i=1;i<tri.length;i++){
+    const A = tri[i-1], B = tri[i], d = jours(A.date, B.date);
+    let valide = d > 0;
+    const brut = {};
+    for(const c of compteursDe(fl)){
+      brut[c.id] = {};
+      for(const cad of cads){
+        const a = idx(A,c.id,cad), b = idx(B,c.id,cad);
+        brut[c.id][cad] = (a==null || b==null) ? null : b - a;
+        if(brut[c.id][cad] != null && brut[c.id][cad] < 0) valide = false;
+      }
+    }
+    if(!valide){ out.push({A, B, d, valide:false}); continue; }
+    let somme = 0;
+    for(const l of logementsDe())
+      for(const c of compteursDu(l.id, fl))
+        for(const cad of cads){
+          const v = brut[c.id][cad] || 0;
+          const w = c.inclut ? (brut[c.inclut] ? (brut[c.inclut][cad] || 0) : 0) : 0;
+          somme += v - w;
+        }
+    if(somme < 0){ out.push({A, B, d, valide:false}); continue; }
+    const G = generalDe(fl);
+    const hasGen = generalReleve(A, B, fl);
+    const general = hasGen ? cads.reduce((s,cad)=> s + (brut[G.id][cad]||0), 0) : somme;
+    out.push({A, B, d, valide:true, hasGen, general, somme, ecart: general - somme});
+  }
+  return out;
+}
+
+/* ── contrôle de cohérence des relevés ───────────────── */
+/* Parcourt les couples consécutifs et signale ce qui ne tient pas debout.
+   Chaque anomalie est rattachée aux deux relevés du couple, pour pouvoir
+   marquer les lignes fautives et filtrer sur un relevé en cours de saisie. */
+const MINJ = 90;   // en deçà, annualiser une période ne veut rien dire
+function anomaliesDe(R, fl=FL){
+  const out = [], cads = cadrans(fl), cpts = compteursDe(fl), G = generalDe(fl);
+  const tri = R.filter(r=>r.fluide===fl).sort((a,b)=> a.date < b.date ? -1 : 1);
+  const aujourdhui = new Date().toISOString().slice(0,10);
+  const q = v => qte(v, fl);
+
+  for(const r of tri)
+    if(r.date > aujourdhui) out.push({t:'warn', rels:[r.id], m:t('ctrlFutur',{x:dateFr(r.date)})});
+
+  for(let i=1;i<tri.length;i++){
+    const A = tri[i-1], B = tri[i], rels = [A.id, B.id], d = jours(A.date, B.date);
+    if(d <= 0){ out.push({t:'err', rels, m:t('ctrlDates',{x:dateFr(B.date)})}); continue; }
+
+    // un compteur ne revient pas en arrière
+    let recul = false;
+    const inc = {};
+    for(const c of cpts){
+      inc[c.id] = {};
+      for(const cad of cads){
+        const a = idx(A,c.id,cad), b = idx(B,c.id,cad);
+        /* Un sous-compteur sans index est compté pour zéro par le calcul, ce
+           qui passerait inaperçu : le cas arrive dès qu'on ajoute un compteur
+           après des relevés déjà saisis. Le général, lui, est facultatif. */
+        if((a == null || b == null) && c.logement){
+          inc[c.id][cad] = null;
+          if(cad === cads[0])
+            out.push({t:'warn', rels, m:t('ctrlIndexAbsent',{x:esc(c.nom),
+                      da:dateFr(A.date), db:dateFr(B.date)})});
+          continue;
+        }
+        if(a == null || b == null){ inc[c.id][cad] = null; continue; }
+        inc[c.id][cad] = b - a;
+        if(b < a){
+          recul = true;
+          const nom = esc(c.nom) + (cads.length > 1 ? ', ' + nomCadranCourt(cad) : '');
+          out.push({t:'err', rels, m:t('ctrlRecul',{x:nom, a:nf(a,FLUIDES[fl].dec), da:dateFr(A.date),
+                                                    b:nf(b,FLUIDES[fl].dec), db:dateFr(B.date)})});
+        }
+      }
+    }
+    if(recul) continue;
+
+    // un compteur englobant mesure forcément plus que celui qu'il englobe
+    let englobe = false;
+    for(const c of cpts) if(c.inclut){
+      let mien = 0, sien = 0, connu = true;
+      for(const cad of cads){
+        if(inc[c.id][cad] == null || !inc[c.inclut] || inc[c.inclut][cad] == null){ connu = false; break; }
+        mien += inc[c.id][cad]; sien += inc[c.inclut][cad];
+      }
+      if(connu && mien < sien){
+        englobe = true;
+        out.push({t:'err', rels, m:t('ctrlInclut',{a:esc(c.nom), b:esc(nomDe(c.inclut)),
+                  x:q(mien), y:q(sien), da:dateFr(A.date), db:dateFr(B.date)})});
+      }
+    }
+    if(englobe) continue;
+
+    // somme des logements comparée au compteur général, quand il est relevé
+    let somme = 0;
+    for(const c of cpts) if(c.logement)
+      for(const cad of cads)
+        somme += (inc[c.id][cad] || 0) - (c.inclut && inc[c.inclut] ? (inc[c.inclut][cad] || 0) : 0);
+    const gen = (G && generalReleve(A,B,fl))
+      ? cads.reduce((s,cad)=> s + (inc[G.id][cad] || 0), 0) : null;
+
+    if(gen != null && somme > 0){
+      if(gen < somme*0.95)
+        out.push({t:'warn', rels, m:t('ctrlSousGeneral',{p:nf((somme/gen-1)*100,1),
+                  da:dateFr(A.date), db:dateFr(B.date)})});
+      if(gen > somme*1.5)
+        out.push({t:'warn', rels, m:t('ctrlSurGeneral',{p:nf((gen/somme-1)*100,0),
+                  da:dateFr(A.date), db:dateFr(B.date)})});
+    }
+
+    // Rythme annuel comparé à la médiane des autres périodes. Ramener à l'année
+    // une poignée de jours ne veut rien dire, une absence ou un chauffage d'appoint
+    // suffit à doubler le résultat : sous un trimestre, on ne compare pas. Les
+    // périodes trop courtes ne servent pas non plus de référence.
+    if(d >= MINJ){
+      const totalDe = (X,Y)=>{
+        let s = 0, ok = true;
+        const src = (G && generalReleve(X,Y,fl)) ? [G] : cpts.filter(c=>c.logement);
+        for(const c of src) for(const cad of cads){
+          const a = idx(X,c.id,cad), b = idx(Y,c.id,cad);
+          if(a == null || b == null){ ok = false; break; }
+          s += b - a - (c.inclut ? Math.max(0,(idx(Y,c.inclut,cad)||0)-(idx(X,c.inclut,cad)||0)) : 0);
+        }
+        return ok ? s : null;
+      };
+      const refs = [];
+      for(let k=1;k<tri.length;k++){
+        if(k===i) continue;
+        const dd = jours(tri[k-1].date, tri[k].date);
+        const v = totalDe(tri[k-1], tri[k]);
+        if(dd >= MINJ && v != null && v >= 0) refs.push(v*365/dd);
+      }
+      const ici = totalDe(A,B);
+      if(refs.length && ici != null){
+        refs.sort((a,b)=>a-b);
+        const n2 = refs.length;
+        const med = n2%2 ? refs[(n2-1)/2] : (refs[n2/2-1] + refs[n2/2])/2;
+        const rythme = ici*365/d;
+        if(med > 0 && (rythme > med*3 || rythme < med/3))
+          out.push({t:'warn', rels, m:t('ctrlRythme',{x:q(rythme), y:q(med),
+                    da:dateFr(A.date), db:dateFr(B.date)})});
+      }
+    }
+  }
+  return out;
+}
+
+/* ── vue 1 : répartition ─────────────────────────────── */
+let detailTarif = false;
+
+/* Signe explicite : « + 12 » et « − 12 » se lisent, « -12 » se rate. */
+const signe = (v, f=FL) => (v < 0 ? '− ' : '+ ') + qte(Math.abs(v), f);
+
+/* Bloc des index d'un logement. Avec un seul compteur et un seul cadran on
+   garde les deux grandes cases de la page eau ; dès qu'il y a deux cadrans ou
+   deux compteurs, on passe à une ligne par cadran, sinon la carte devient
+   illisible. */
+function blocCompteurs(l, r){
+  const fl = r.fluide, cads = r.cads, dec = FLUIDES[fl].dec;
+  if(l.cpts.length === 1 && cads.length === 1){
+    const c = l.cpts[0];
+    return `<div class="idx">
+      <div><div class="lab">${dateFr(r.A.date)}</div>
+        <div class="v num">${nf(idx(r.A,c.id,'u'), dec)}</div></div>
+      <div><div class="lab">${dateFr(r.B.date)}</div>
+        <div class="v num">${nf(idx(r.B,c.id,'u'), dec)}</div></div>
+    </div>`;
+  }
+  /* Plusieurs compteurs sur un même logement se suivent dans le même encadré,
+     sans sous-titre : leurs index sont d'ordres de grandeur si différents que
+     nommer chaque compteur n'apprend rien et double la hauteur de la carte. */
+  return `<div class="souscpt">${l.cpts.map(c=>
+    cads.map(x=>`<div class="kv">
+        <span class="cad">${cads.length>1?`<i class="${x}"></i>`:''}${nomCadranCourt(x)}</span>
+        <b class="num" style="font-weight:500;color:var(--ink-3);font-size:12.5px">
+          ${nf(idx(r.A,c.id,x), dec)} → ${nf(idx(r.B,c.id,x), dec)}
+          &nbsp;<span style="color:var(--ink);font-weight:700">${nf(c.delta[x], dec)}</span></b>
+      </div>`).join('')
+  ).join('')}</div>`;
+}
+
+/* Détail du tarif, une colonne de prix par cadran.
+
+   Une seule facture fournit la période : sa ligne dit déjà tout. La ligne des
+   jours non couverts recopierait ses prix, et la moyenne pondérée d'une seule
+   ligne est cette ligne. Les deux sont donc tues, et les jours non couverts
+   restent signalés par le message affiché sous les cartes. Dès que deux factures
+   se partagent la période, tout revient : c'est là que la pondération se voit. */
+function lignesTarif(r, cellules){
+  const cads = r.cads, fl = r.fluide, dp = FLUIDES[fl].decPrix;
+  const seule = r.TP.parts.length <= 1;
+  const {td, tr} = cellules;
+  const prix = f => cads.map(c=> td(nf(prixAff(f,c),dp) + ' €')).join('')
+                  + (r.TP.accise > 0 ? td(nf(acciseAff(f),dp) + ' €') : '');
+  // les jours couverts s'écrivent sur le total de la période : une proportion
+  // sans son dénominateur ne dit pas de quoi elle est la part
+  const couverture = n => td(t('joursSur',{a:n, b:r.nbJours}));
+  const out = r.TP.parts.map(x=> tr('',
+      `<td>${esc(x.f.libelle)}</td>` + td(dateFr(x.f.debut) + ' → ' + dateFr(x.f.fin))
+    + prix(x.f) + couverture(x.n) + td(eur(versAff(r, x.abo)))));
+  if(!r.TP.parts.length)                       // aucune facture ne recouvre la période
+    out.push(tr('sec', `<td>${t('joursHors')}</td>` + td('—') + prix(r.TP.F)
+      + td(r.nbJours + ' ' + t('jours')) + td(eur(versAff(r, r.fixe)))));
+  else if(r.TP.hors > 0 && !seule)
+    out.push(tr('sec', `<td>${t('joursHors')}</td>` + td('—') + prix(r.TP.F)
+      + couverture(r.TP.hors)
+      + td(r.TP.aboHors ? eur(versAff(r, r.TP.aboHors)) : '—')));
+  if(!seule)
+    out.push(tr('tot', `<td>${t('prixMoyen')}</td><td></td>`
+      + cads.map(c=> td(nf(versAff(r, r.TP.pu[c]),dp) + ' €')).join('')
+      + (r.TP.accise > 0 ? td(nf(versAff(r, r.TP.accise),dp) + ' €') : '')
+      + td(r.nbJours + ' ' + t('jours')) + td(eur(versAff(r, r.fixe)))));
+  return out.join('');
+}
+function enTeteTarif(r){
+  const cads = r.cads, fl = r.fluide;
+  // la mention reste collée au dernier mot : « HT » seul sur sa ligne se lit mal
+  const mt = '&nbsp;<span class="mt">' + mention(fl) + '</span>';
+  return `<tr><th>${t('facture')}</th><th>${t('periode')}</th>
+    ${cads.map(c=>`<th>${cads.length>1 ? nomCadran(c)+mt
+      : t(fl==='eau'?'prixUnitEau':'prixUnitElec')}</th>`).join('')}
+    ${r.TP.accise > 0 ? `<th>${t('accise')}${mt}</th>` : ''}
+    <th>${t('partPeriode')}</th>
+    <th>${fl === 'elec' ? t('aboCta') : t('abonnement')}${mt}</th></tr>`;
+}
+function tableTarif(r){
+  const cellules = {
+    td: v => `<td class="num">${v}</td>`,
+    tr: (cl, contenu) => `<tr${cl?` class="${cl}"`:''}>${contenu}</tr>`
+  };
+  return `<div class="scroll" style="margin-bottom:16px"><table>
+    <thead>${enTeteTarif(r)}</thead>
+    <tbody>${lignesTarif(r, cellules)}</tbody></table></div>`;
+}
+
+function ligneTarif(r){
+  const dp = FLUIDES[r.fluide].decPrix, a = eur(versAff(r, r.fixe));
+  if(r.fluide === 'eau')
+    return t('ligneTarifEau',{j:r.nbJours, p:nf(r.TP.pu.u,dp), a});
+  return t('ligneTarifElec',{j:r.nbJours, hc:nf(versAff(r, r.TP.pu.hc),dp),
+                             hp:nf(versAff(r, r.TP.pu.hp),dp), a});
+}
+
+/* Ce que le fournisseur facture, contre ce que les locataires paient. La
+   différence est la première question du propriétaire devant sa facture, et
+   elle ne se devine pas : elle tient aux kWh que la facture compte et que les
+   sous-compteurs n'ont pas vus, jamais aux parts fixes, réparties en entier. */
+function rapprochement(r){
+  if(!FLUIDES[r.fluide].suivi) return null;
+  const parts = r.TP.parts;
+  if(!parts.length || !parts.every(x=> x.f.montant > 0)) return null;
+  /* Les deux montants doivent porter sur les mêmes jours. Additionner le total
+     d'une facture qui ne recoupe la période que de six jours gonflait le reste
+     à charge de plusieurs centaines d'euros : mieux vaut ne rien afficher et
+     dire pourquoi. On exige donc une seule facture, recouvrant l'essentiel de
+     la période comme la période recouvre l'essentiel de la facture. */
+  if(parts.length > 1) return {impossible:'rapprochPlusieurs'};
+  const x = parts[0], jFacture = jours(x.f.debut, x.f.fin);
+  if(x.n < r.nbJours*0.95 || x.n < jFacture*0.95)
+    return {impossible:'rapprochDecale', n:x.n, d:jFacture, p:r.nbJours};
+  return {factureTTC:x.f.montant, reparti:r.totalRefacture,
+          reste:x.f.montant - r.totalRefacture,
+          volFacture:x.f.volume || 0, volMesure:r.sommeTot};
+}
+function blocRapprochement(r){
+  const q = rapprochement(r);
+  if(!q) return '';
+  if(q.impossible)
+    return `<p class="englobe">${t(q.impossible, {n:q.n, d:q.d, p:q.p})}</p>`;
+  const fl = r.fluide, dec = FLUIDES[fl].dec;
+  const positif = q.reste >= 0;
+  const diff = q.volFacture - q.volMesure;
+  const expl = !q.volFacture ? t('rapprochSansVolume')
+    : t(diff >= 0 ? 'rapprochPlus' : 'rapprochMoins',
+        {k: qte(Math.abs(diff), fl, dec), vf: qte(q.volFacture, fl, dec),
+         vm: qte(q.volMesure, fl, dec)});
+  return `<h4 style="margin-top:22px">${t('rapprochTitre')}</h4>
+    <div class="scroll" style="max-width:560px"><table><tbody>
+      <tr><td>${t('rapprochFacture')}</td><td class="num">${eur(q.factureTTC)}</td></tr>
+      <tr><td>${t('rapprochReparti')}</td><td class="num">${eur(q.reparti)}</td></tr>
+      <tr class="tot"><td>${positif ? t('rapprochReste') : t('rapprochEncaisse')}</td>
+        <td class="num">${eur(Math.abs(q.reste))}</td></tr>
+    </tbody></table></div>
+    <p class="englobe">${expl}</p>
+    <p class="englobe">${t('rapprochCumul')}</p>`;
+}
+
+/* Une carte de logement. Le document imprimé reprend exactement la même : même
+   grille, mêmes couleurs, même ordre des lignes. Seuls les champs modifiables
+   deviennent du texte et le bouton Avis disparaît. Trois tableaux denses sur du
+   papier effraient là où quatre cartes se lisent d'un coup. */
+function carteLogement(r, l, i, statique){
+  const fl = r.fluide, cads = r.cads;
+  const [cv, cb] = TEINTES[i%4];
+  const p = pieces(r, l);
+  // Le bloc des compteurs montre déjà la consommation de chaque cadran : on ne
+  // redonne le détail que là où il apporte un chiffre nouveau, la déduction
+  // d'un compteur englobé.
+  const aDeduction = cads.some(x=> l.deduction[x] > 0);
+  return `<div class="lgt">
+    <div class="top" style="background:var(${cb})">
+      <div class="ico" style="background:var(${cv})">${ico('maison',15)}</div>
+      ${statique ? `<b>${esc(l.nom)}</b>`
+                 : `<input class="edit nom" data-nom="${l.id}" value="${esc(l.nom)}">`}
+    </div>
+    <div class="body">
+      ${fl === 'elec'
+        ? `<div class="datescarte">${t('duAu',{a:dateFr(r.A.date), b:dateFr(r.B.date)})}</div>`
+        : `<div class="kv"><span>${t('surface')}</span>
+             <b>${statique ? nf(l.surface,0)
+               : `<input class="edit surf num" type="number" step="1" min="0" data-surf="${l.id}"
+                    value="${l.surface!=null?l.surface:''}">`} m²</b></div>`}
+      ${blocCompteurs(l, r)}
+      ${aDeduction ? `<div class="kv"><span>${t('releveCompteur')}</span>
+        <b class="num">${qte(cads.reduce((s,x)=>s+l.brut[x],0), fl)}</b></div>
+      <div class="kv">
+        <span>− ${esc(nomDe((l.cpts.find(x=>x.inclut)||{}).inclut))}</span>
+        <b class="num">${qte(cads.reduce((s,x)=>s+l.deduction[x],0), fl)}</b></div>` : ''}
+      <div class="kv"><span>${t('consoPropre')}</span>
+        <b class="num" style="color:var(${cv})">${qte(l.totalPropre, fl)}</b></div>
+      ${r.hasGen ? `<div class="kv"><span>${t('partEcart')}</span>
+        <b class="num">${signe(cads.reduce((s,x)=>s+l.part[x],0), fl)}</b></div>
+      <div class="kv gras"><span>${t('volumeFacture')}</span>
+        <b class="num">${qte(l.totalFacture, fl)}</b></div>` : ''}
+      <div class="sep2"></div>
+      <div class="kv"><span>${fl==='eau'?t('eau'):t('energie')}</span><b class="num">${eur(p.ene)}</b></div>
+      ${p.acc ? `<div class="kv"><span>${t('accise')}</span><b class="num">${eur(p.acc)}</b></div>` : ''}
+      <div class="kv"><span>${fl==='elec'?t('aboCta'):t('abonnement')}</span>
+        <b class="num">${eur(p.pf)}</b></div>
+      ${p.ht ? `<div class="kv gras"><span>${t('totalHT')}</span>
+        <b class="num">${eur(p.sousTotal)}</b></div>
+      <div class="kv"><span>${t('avisTvaL',{x:nf(r.TP.tva,0)})}</span>
+        <b class="num">${eur(p.tva)}</b></div>` : ''}
+    </div>
+    <div class="foot" style="background:var(${cb})"><div><div class="lab">${t('aRegler')}</div>
+      <div class="v num">${eur(p.total)}</div></div></div>
+  </div>`;
+}
+const grilleCartes = (r, statique) =>
+  `<div class="quad">${r.lignes.map((l,i)=> carteLogement(r, l, i, statique)).join('')}</div>`;
+
+function vueRepartition(){
+  const fl = FL, c = S.calcul[fl];
+  const toutes = periodesMesurees(fl);
+  const connue = toutes.some(p=> p.A.id===c.debut && p.B.id===c.fin);
+  if(!connue && toutes.length){
+    const p = [...toutes].reverse().find(x=>x.valide) || toutes[toutes.length-1];
+    c.debut = p.A.id; c.fin = p.B.id;
+  }
+  const r = toutes.length ? calculer(fl, c.debut, c.fin) : {erreur:t('errDeuxReleves')};
+  if(r.erreur){
+    $('#vue-repartition').innerHTML = `<div class="block">
+      <div class="bhead"><div class="badge">${ico('immeuble',28)}</div><div>
+        <h2>${t('lesLogements')}</h2></div></div>
+      <div class="msg err">${r.erreur}</div></div>`;
+    return;
+  }
+  const cads = r.cads;
+  const courant = toutes.findIndex(p=> p.A.id===c.debut && p.B.id===c.fin);
+
+  let html = `<div class="block">
+    <div class="bhead"><div class="badge">${ico('immeuble',28)}</div><div>
+      <h2>${t('lesLogements')}</h2></div>
+      <label class="perio" for="s-per">
+        <span class="ic">${ico('calendrier',19)}</span>
+        <span class="lb">${t('periodeReleve')}</span>
+        <select id="s-per">${toutes.map((p,k)=>
+          `<option value="${k}" ${k===courant?'selected':''}>${p.valide?'':'⚠ '}${p.d} ${t('jours')} · ${dateFr(p.A.date)} → ${dateFr(p.B.date)}</option>`
+        ).join('')}</select></label></div>
+    <p class="tarifLigne">${/* le détail ouvert porte déjà tous ces chiffres */
+      detailTarif ? `${r.nbJours} ${t('jours')}` : ligneTarif(r)}
+      <a href="#" id="t-detail">${detailTarif ? t('masquerTarif') : t('voirTarif')}</a></p>
+    ${detailTarif ? tableTarif(r) : ''}
+    ${grilleCartes(r, false)}
+    <div class="total"><span>${t('totalARegler')}</span><b class="num">${eur(r.totalRefacture)}</b></div>
+    ${blocRapprochement(r)}
+
+    ${r.mode === 'manuel' && Math.abs(r.cleTotale - 1) > 0.0005
+      ? `<div class="msg warn" style="margin-top:13px">${t('partsPasCent')}</div>` : ''}
+    ${r.alertes.map(a=>`<div class="msg ${a.t}" style="margin-top:13px">${a.m}</div>`).join('')}
+    ${r.hasGen ? `<p class="englobe">${t('phraseEcart',{g:qte(r.generalTot,fl), s:qte(r.sommeTot,fl),
+      e:qte(Math.abs(r.ecartTot),fl), p:nf(Math.abs(r.pct),1),
+      sens:r.ecartTot<0?t('deMoins'):t('dePlus')})}
+      ${r.ecartTot<0?t('explEcartNeg'):t('explEcartPos')}</p>` : ''}
+    ${(()=>{ const p = r.lignes.find(l=> l.cpts.some(x=>x.inclut));
+       if(!p) return '';
+       const cc = p.cpts.find(x=>x.inclut);
+       return `<p class="englobe">${t('englobe',{a:esc(p.nom), b:esc(nomDe(cc.inclut)),
+         v:qte(cads.reduce((s,x)=>s+p.deduction[x],0), fl)})}</p>`; })()}
+  </div>`;
+
+  $('#vue-repartition').innerHTML = html;
+  habillerSelects($('#vue-repartition'));
+  brancherLogements($('#vue-repartition'));
+  const td = $('#t-detail');
+  if(td) td.onclick = e => { e.preventDefault(); detailTarif = !detailTarif; vueRepartition(); };
+  const sp = $('#s-per');
+  if(sp) sp.onchange = ()=>{
+    const p = toutes[+sp.value]; if(!p) return;
+    S.calcul[fl].debut = p.A.id; S.calcul[fl].fin = p.B.id; sauver(); vueRepartition();
+  };
+}
+
+/* Nom et surface se modifient directement sur les cartes. */
+function brancherLogements(racine){
+  racine.querySelectorAll('[data-nom]').forEach(i=> i.onchange = ()=>{
+    const l = S.logements.find(x=>x.id===i.dataset.nom); if(!l) return;
+    marquer(l); l.nom = i.value.trim() || l.nom;
+    // le compteur principal du logement porte le même nom, on le suit
+    // le nom suit le logement dans les deux fluides : renommer depuis l'onglet
+    // eau laissait la saisie électrique afficher l'ancien nom
+    for(const f in FLUIDES){
+      const cs = compteursDu(l.id, f);
+      if(cs.length === 1) cs[0].nom = l.nom;
+    }
+    sauver(); rafraichir();
+  });
+  racine.querySelectorAll('[data-surf]').forEach(i=> i.onchange = ()=>{
+    const l = S.logements.find(x=>x.id===i.dataset.surf); if(!l) return;
+    marquer(l);
+    const v = parseFloat(String(i.value).replace(',','.'));
+    l.surface = isNaN(v)||v<0 ? 0 : v; sauver(); rafraichir();
+  });
+}
+
+/* ── documents imprimés ──────────────────────────────── */
+/* Construits à part, jamais l'écran plaqué sur du papier. */
+const imprimer = html => { $('#impression').innerHTML = html; window.print(); };
+const ligne = (a,b,cl='') => `<tr class="${cl}"><td>${a}</td><td class="num">${b}</td></tr>`;
+const titreFluide = fl => t(fl === 'eau' ? 'titreEau' : 'titreElec');
+
+function entete(r, sous, sansPeriode){
+  const per = t('avisPeriode',{a:dateFr(r.A.date), b:dateFr(r.B.date), j:r.nbJours});
+  return `<div class="ent"><h1>${titreFluide(r.fluide)}</h1>
+    <p class="meta">${sous}${sansPeriode ? '' : '<br>' + per}
+    &nbsp;·&nbsp; ${t('etabliLe',{d:dateFr(new Date().toISOString().slice(0,10))})}</p></div>`
+    + (sansPeriode ? `<h2>${per}</h2>` : '');
+}
+
+/* Le rapprochement, tel qu'à l'écran mais en composition de document : c'est la
+   réponse à la première question qu'on se pose devant le décompte, elle a sa
+   place sur le papier qu'on garde. */
+function rapprochementImprime(r){
+  const q = rapprochement(r);
+  if(!q || q.impossible) return '';
+  const fl = r.fluide, dec = FLUIDES[fl].dec;
+  const diff = q.volFacture - q.volMesure;
+  const expl = !q.volFacture ? t('rapprochSansVolume')
+    : t(diff >= 0 ? 'rapprochPlus' : 'rapprochMoins',
+        {k: qte(Math.abs(diff), fl, dec), vf: qte(q.volFacture, fl, dec),
+         vm: qte(q.volMesure, fl, dec)});
+  return `<h2>${t('rapprochTitre')}</h2>
+    <table><tbody>
+      ${ligne(t('rapprochFacture'), eur(q.factureTTC))}
+      ${ligne(t('rapprochReparti'), eur(q.reparti))}
+      ${ligne('<b>' + (q.reste >= 0 ? t('rapprochReste') : t('rapprochEncaisse')) + '</b>',
+              '<b>' + eur(Math.abs(q.reste)) + '</b>', 'tot')}
+    </tbody></table>
+    <p class="note">${expl}</p>
+    <p class="note">${t('rapprochCumul')}</p>`;
+}
+
+/* Même tableau qu'à l'écran, avec les mêmes lignes tues quand elles se répètent. */
+function blocFacture(r){
+  const cellules = {
+    td: v => `<td class="num">${v}</td>`,
+    tr: (cl, contenu) => `<tr${cl?` class="${cl}"`:''}>${contenu}</tr>`
+  };
+  return `<h2>${t('tarifPeriode')}</h2>
+    <table>
+      <thead>${enTeteTarif(r)}</thead>
+      <tbody>${lignesTarif(r, cellules)}</tbody>
+    </table>`;
+}
+
+/* Document du propriétaire. Il reprend la vue Répartition telle quelle : le
+   même bandeau de tarif, les mêmes quatre cartes, le même total. Les trois
+   grands tableaux d'avant disaient la même chose en plus dense, et un papier
+   couvert de colonnes se repousse au lieu de se lire. */
+function docPour(r){
+  const fl = r.fluide;
+  const porteur = r.lignes.find(l=> l.cpts.some(x=>x.inclut));
+  const cpt = porteur ? porteur.cpts.find(x=>x.inclut) : null;
+  const somme = o => r.cads.reduce((s,c)=> s+o[c], 0);
+
+  return entete(r, t('docSous'), true)
+  + blocFacture(r)
+  + `<h2>${t('lesLogements')}</h2>`
+  + grilleCartes(r, true)
+  + `<div class="cadre"><span>${t('totalARegler')}</span><b>${eur(r.totalRefacture)}</b></div>`
+  + rapprochementImprime(r)
+  + (porteur && cpt ? `<p class="note">${t('englobe',{a:esc(porteur.nom),
+      b:esc(nomDe(cpt.inclut)), v:qte(somme(porteur.deduction), fl)})}</p>` : '')
+  + (r.hasGen ? `<p class="note">${r.ecartTot<0?t('explEcartNeg'):t('explEcartPos')}</p>`
+              : `<p class="note">${t('sansGeneral')}</p>`);
+}
+
+/* ── avis individuel du locataire, en sommeil ──
+   Sans appelant depuis le 19 août 2026 : le bouton qui l'ouvrait a été retiré
+   des cartes. Conservé le temps de savoir s'il reparaîtra ailleurs.
+   À SUPPRIMER SI TOUJOURS INUTILISÉ APRÈS LE 19 FÉVRIER 2027,
+   avec detailAvis, piedAvis et avisPour, et les clés du dictionnaire qu'eux
+   seuls emploient : avis, avisPourQui, avisDetail, avisIndex, avisIndexCad,
+   avisDeduit, avisPart, avisConso, avisAccise, avisAbo et ses variantes,
+   avisHT, avisTotal, avisPied, avisPiedSansGen, ctaComprise.
+   Le code reste dans l'historique git : node check-code-mort.js le rappelle. */
+
+/* Détail d'un seul logement pour un fluide, sans les chiffres des autres. */
+function detailAvis(r, l){
+  const fl = r.fluide, cads = r.cads, dec = FLUIDES[fl].dec, dp = FLUIDES[fl].decPrix;
+  const p = pieces(r, l);
+  const somme = o => cads.reduce((s,c)=> s+o[c], 0);
+  const cle = {surface:'avisAboSurface', egales:'avisAboEgales', prorata:'avisAboConso',
+               manuel:'avisAboManuel'}[r.mode] || 'avisAbo';
+  let out = '';
+  for(const c of l.cpts){
+    if(l.cpts.length > 1) out += ligne('<b>'+esc(c.nom)+'</b>', '', 'sec');
+    for(const cad of cads){
+      const lib = cads.length > 1
+        ? t('avisIndexCad',{c:nomCadranCourt(cad), d:dateFr(r.A.date)})
+        : t('avisIndex',{d:dateFr(r.A.date)});
+      const lib2 = cads.length > 1
+        ? t('avisIndexCad',{c:nomCadranCourt(cad), d:dateFr(r.B.date)})
+        : t('avisIndex',{d:dateFr(r.B.date)});
+      out += ligne(lib,  nf(idx(r.A,c.id,cad),dec));
+      out += ligne(lib2, nf(idx(r.B,c.id,cad),dec));
+      out += ligne(t('releveCompteur') + (cads.length>1 ? ', '+nomCadranCourt(cad) : ''),
+                   nf(c.delta[cad],dec));
+      if(c.inclut){
+        out += ligne(t('avisDeduit',{x:esc(nomDe(c.inclut))}), '− '+nf(c.ded[cad],dec));
+        out += ligne(t('consoPropre') + (cads.length>1 ? ', '+nomCadranCourt(cad) : ''),
+                     nf(c.net[cad],dec));
+      }
+    }
+  }
+  if(r.hasGen){
+    out += ligne(t('avisPart'), signe(somme(l.part), fl));
+    out += ligne('<b>'+t('volumeFacture')+'</b>', '<b>'+qte(l.totalFacture,fl)+'</b>');
+  }
+  // Une ligne de prix par cadran, au prix tel qu'il est imprimé sur la facture :
+  // le locataire doit pouvoir refaire le calcul avec sa propre facture sous les
+  // yeux. Sur plusieurs cadrans, un sous-total reprend le centime d'arrondi.
+  if(cads.length > 1){
+    cads.forEach(cad=>{
+      const pu = versAff(r, r.TP.pu[cad]);
+      out += ligne(nomCadran(cad) + ' · ' + t('avisConso',{v:qte(l.facture[cad],fl), p:nf(pu,dp)}),
+                   eur(l.facture[cad]*pu));
+    });
+    out += ligne('<b>'+(fl==='eau'?t('eau'):t('energie'))+' '+mention(fl)+'</b>', '<b>'+eur(p.ene)+'</b>');
+  }else{
+    out += ligne(t('avisConso',{v:qte(l.facture[cads[0]],fl), p:nf(versAff(r, r.TP.pu[cads[0]]),dp)}),
+                 eur(p.ene));
+  }
+  if(p.acc) out += ligne(t('avisAccise',{v:qte(l.totalFacture,fl),
+                            p:nf(versAff(r, r.TP.accise),dp)}), eur(p.acc));
+  if(p.pf)  out += ligne(t(cle,{t:nf(versAff(r, r.fixe),2), s:nf(l.surface,0), st:nf(r.surfTot,0),
+                                p:nf(l.cleFixe*100,0)})
+                         + (fl === 'elec' ? ', ' + t('ctaComprise') : ''), eur(p.pf));
+  if(p.ht){
+    out += ligne('<b>'+t('avisHT')+'</b>', '<b>'+eur(p.sousTotal)+'</b>');
+    out += ligne(t('avisTvaL',{x:nf(r.TP.tva,0)}), eur(p.tva));
+  }
+  return out;
+}
+
+function piedAvis(r){
+  return r.hasGen
+    ? t('avisPied',{g:qte(r.generalTot,r.fluide), s:qte(r.sommeTot,r.fluide),
+                    e:qte(Math.abs(r.ecartTot),r.fluide), f:esc(r.F.libelle)})
+    : t('avisPiedSansGen',{s:qte(r.sommeTot,r.fluide), f:esc(r.F.libelle)});
+}
+
+function avisPour(r, l){
+  return entete(r, t('avisPourQui',{x:esc(l.nom)}))
+  + blocFacture(r)
+  + `<h2>${t('avisDetail')}</h2>
+    <table><tbody>${detailAvis(r, l)}</tbody></table>
+    <div class="cadre"><span>${t('avisTotal')}</span><b>${eur(l.montant)}</b></div>
+    <p class="pied">${piedAvis(r)}</p>`;
+}
+
+window.onafterprint = ()=> { $('#impression').innerHTML = ''; };
+
+/* ── vue 2 : consommation dans le temps ──────────────── */
+let granConso = 'period', partConso = '';
+
+/* Consommation propre de chaque logement entre deux relevés, cadran par cadran.
+   Aucun prix n'intervient ici : la courbe doit se tracer même quand aucune
+   facture n'a encore été saisie. */
+function consoDe(fl, A, B){
+  const cads = cadrans(fl), out = {};
+  for(const l of logementsDe()){
+    const o = {}; cads.forEach(c=> o[c] = 0);
+    for(const c of compteursDu(l.id, fl))
+      for(const cad of cads){
+        const a = idx(A,c.id,cad), b = idx(B,c.id,cad);
+        if(a == null || b == null) continue;
+        let v = b - a;
+        if(c.inclut){
+          const x = idx(A,c.inclut,cad), y = idx(B,c.inclut,cad);
+          if(x != null && y != null) v -= (y - x);
+        }
+        o[cad] += v;
+      }
+    out[l.id] = o;
+  }
+  return out;
+}
+
+/* Une période à cheval sur deux mois est répartie au prorata des jours : sinon
+   un relevé pris le 3 du mois ferait basculer deux mois de consommation sur un
+   seul, et la courbe mentirait sur la saison. */
+function poidsCalendaires(deb, fin, gran){
+  const p = s=>Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10));
+  const t0 = p(deb), t1 = p(fin), tot = (t1-t0)/86400000;
+  const out = {};
+  if(tot <= 0) return out;
+  for(let t=t0; t<t1; t+=86400000){
+    const d = new Date(t);
+    const cle = gran === 'year' ? String(d.getUTCFullYear())
+      : d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+    out[cle] = (out[cle]||0) + 1/tot;
+  }
+  return out;
+}
+
+function libelleSeau(cle, gran){
+  if(gran === 'year') return cle;
+  const [a,m] = cle.split('-');
+  const d = new Date(Date.UTC(+a, +m-1, 1));
+  const mois = d.toLocaleDateString(loc(), {month:'short', timeZone:'UTC'});
+  return mois.replace('.','') + '\n' + a;
+}
+
+function agreger(fl, gran, idLog){
+  const per = periodesMesurees(fl).filter(p=>p.valide);
+  const cads = cadrans(fl);
+  const seaux = [];
+  const par = {};
+  const ajouter = (cle, ordre, lab, vals, sous)=>{
+    let s = par[cle];
+    if(!s){ s = par[cle] = {cle, ordre, lab, vals:{}, sous:[]}; cads.forEach(c=> s.vals[c]=0); seaux.push(s); }
+    cads.forEach(c=> s.vals[c] += vals[c]);
+    if(sous) s.sous.push(sous);
+  };
+  for(const p of per){
+    const c = consoDe(fl, p.A, p.B);
+    const vals = {}; cads.forEach(x=> vals[x] = 0);
+    for(const l of logementsDe()){
+      if(idLog && l.id !== idLog) continue;
+      cads.forEach(x=> vals[x] += c[l.id][x]);
+    }
+    if(gran === 'period'){
+      ajouter(p.A.date+'_'+p.B.date, p.A.date,
+        dateFr(p.A.date).slice(0,5)+'\n→ '+dateFr(p.B.date).slice(0,5)+'\n'+p.B.date.slice(0,4),
+        vals, {deb:p.A.date, fin:p.B.date, j:p.d});
+    }else{
+      const w = poidsCalendaires(p.A.date, p.B.date, gran);
+      for(const cle in w){
+        const part = {}; cads.forEach(x=> part[x] = vals[x]*w[cle]);
+        ajouter(cle, cle, libelleSeau(cle, gran), part, null);
+      }
+    }
+  }
+  seaux.sort((a,b)=> a.ordre < b.ordre ? -1 : 1);
+  seaux.forEach(s=> s.total = cads.reduce((a,c)=> a+s.vals[c], 0));
+  return seaux;
+}
+
+/* Échelle « ronde » : un axe gradué à 1 137 ne se lit pas. */
+function palier(v){
+  if(v <= 0) return 1;
+  const e = Math.pow(10, Math.floor(Math.log10(v)));
+  for(const m of [1,1.5,2,2.5,3,4,5,6,8,10]) if(v <= m*e) return m*e;
+  return 10*e;
+}
+
+/* ── suivi : ce qui est facturé contre ce qui est mesuré ─────
+   Le compteur général n'est pas relevé côté électricité, mais la facture dit
+   combien de kWh elle porte. En rapprochant les deux on voit si les
+   sous-compteurs suivent, et de combien la facture les dépasse. Une facture qui
+   ne coïncide pas avec les dates de relevé reçoit la part des périodes qu'elle
+   recouvre, au prorata des jours : c'est une approximation, elle suppose une
+   consommation régulière à l'intérieur d'une période. */
+function suiviFactures(fl){
+  const per = periodesMesurees(fl).filter(p=>p.valide);
+  const out = [];
+  for(const f of facturesDe(fl)){
+    if(!f.debut || !f.fin || !(f.volume > 0)) continue;
+    const total = jours(f.debut, f.fin);
+    if(total <= 0) continue;
+    let mesure = 0, couv = 0, approx = false;
+    for(const p of per){
+      const n = recouvre(p.A.date, p.B.date, f.debut, f.fin);
+      if(n <= 0) continue;
+      mesure += p.somme * n / p.d;
+      couv += n;
+      // une période prise en partie est estimée, même si la facture est
+      // entièrement couverte : on suppose alors un rythme régulier sur ses jours
+      if(n < p.d) approx = true;
+    }
+    if(!couv) continue;                       // aucun relevé sur cette facture
+    /* Les deux colonnes doivent porter sur la même durée. Sans ça, une facture
+       qui commence avant le premier relevé oppose 56 jours de mesure à 62 jours
+       de facturation, et l'écart affiché n'est que ce décalage. Le mesuré est
+       donc ramené à la durée de la facture, au rythme des jours connus. */
+    const ramene = mesure * total / couv;
+    if(couv < total - 0.5) approx = true;
+    /* En dessous de la moitié des jours, l'extrapolation multiplie la mesure
+       par plus de deux : l'écart qui en sortirait ne renseignerait que sur mon
+       hypothèse de régularité, pas sur vos compteurs. On montre la ligne, sans
+       écart, pour qu'on sache que la facture existe et qu'il manque des relevés. */
+    const fiable = couv >= total/2;
+    out.push({f, facture:f.volume, mesure:ramene, mesureBrute:mesure,
+              couv, total, approx, fiable, ecart: fiable ? f.volume - ramene : null});
+  }
+  return out;
+}
+
+function blocSuivi(fl){
+  if(!FLUIDES[fl].suivi) return '';
+  const lignes = suiviFactures(fl), dec = FLUIDES[fl].dec;
+  let html = `<div class="block">
+    <div class="bhead"><div class="badge">${ico('courbe',26)}</div><div>
+      <h2>${t('suiviTitre')}</h2><p>${t('suiviS')}</p></div></div>`;
+  if(!lignes.length) return html + `<p class="vide">${t('suiviVide')}</p></div>`;
+
+  const sures = lignes.filter(l=> l.fiable);         // seules elles entrent au total
+  const tf = sures.reduce((s,l)=>s+l.facture,0);
+  const tm = sures.reduce((s,l)=>s+l.mesure,0);
+  const te = tf - tm;
+  const pct = tm > 0 ? te/tm*100 : 0;
+  const partielle = lignes.some(l=> l.approx || l.couv < l.total - 0.5);
+
+  html += `<div class="scroll"><table>
+    <thead><tr><th>${t('facture')}</th><th>${t('periode')}</th>
+      <th>${t('kwhFacture')}</th><th>${t('kwhMesure')}</th>
+      <th>${t('ecart')}</th><th>${t('couverture')}</th></tr></thead>
+    <tbody>${lignes.map(l=>`<tr>
+      <td>${esc(l.f.libelle)}</td>
+      <td class="num">${dateFr(l.f.debut)} → ${dateFr(l.f.fin)}</td>
+      <td class="num">${qte(l.facture, fl, dec)}</td>
+      <td class="num">${l.approx ? '≈ ' : ''}${qte(l.mesure, fl, dec)}</td>
+      ${l.ecart == null
+        ? `<td class="num" style="color:var(--ink-3)">—</td>`
+        : `<td class="num" style="color:${Math.abs(l.ecart) < l.mesure*0.02 ? 'var(--ink-3)'
+            : (l.ecart > 0 ? 'var(--c3)' : 'var(--c1)')}">${signe(l.ecart, fl)}<br>
+        <span style="color:var(--ink-3);font-size:12px">${
+          l.mesure > 0 ? nf(l.ecart/l.mesure*100,1) + ' %' : '—'}</span></td>`}
+      <td class="num">${l.couv >= l.total - 0.5 ? l.total + " " + t("jours")
+        : `<span style="color:var(--warn)">${t('suiviPartiel',{n:l.couv, d:l.total})}</span>`}</td>
+    </tr>`).join('')}
+      <tr class="tot"><td>${t('total')}</td><td></td>
+        <td class="num">${qte(tf, fl, dec)}</td><td class="num">${qte(tm, fl, dec)}</td>
+        <td class="num">${signe(te, fl)}</td><td class="num"></td></tr>
+    </tbody></table></div>`;
+
+  const cle = Math.abs(pct) < 2 ? 'suiviNeutre' : (te > 0 ? 'suiviPositif' : 'suiviNegatif');
+  html += `<p class="englobe">${t(cle,{x:qte(Math.abs(te), fl, dec), p:nf(Math.abs(pct),1)})}</p>`;
+  if(partielle) html += `<p class="englobe">${t('suiviProrata')}</p>`;
+  return html + `</div>`;
+}
+
+function vueConso(){
+  const fl = FL, cads = cadrans(fl), dec = FLUIDES[fl].dec;
+  const seaux = agreger(fl, granConso, partConso);
+  const nomLog = id => (S.logements.find(l=>l.id===id)||{}).nom || t('gTous');
+
+  let html = `<div class="block">
+    <div class="bhead"><div class="badge">${ico('barres',26)}</div><div>
+      <h2>${t('consoTitre')}</h2></div></div>`;
+
+  if(!seaux.length){
+    html += `<p class="vide">${t('consoVide')}</p></div>`;
+    $('#vue-conso').innerHTML = html + blocSuivi(fl);
+    return;
+  }
+
+  html += `<div class="hfiltres noprint">
+      <div class="hf"><span>${t('fPart')}</span>
+        <div class="ds"><select id="c-part">
+          <option value="">${t('gTous')}</option>
+          ${S.logements.map(l=>`<option value="${l.id}" ${l.id===partConso?'selected':''}>${esc(l.nom)}</option>`).join('')}
+        </select></div></div>
+      <div class="hf"><span>${t('fGran')}</span>
+        <div class="seg" role="group">
+          <button type="button" data-gran="period" class="${granConso==='period'?'on':''}">${t('gPeriode')}</button>
+          <button type="button" data-gran="month"  class="${granConso==='month'?'on':''}">${t('gMois')}</button>
+          <button type="button" data-gran="year"   class="${granConso==='year'?'on':''}">${t('gAnnee')}</button>
+        </div></div>
+      ${granConso!=='period' ? `<span class="hnote">${t('granNote')}</span>` : ''}
+    </div>`;
+
+  const maxi = palier(Math.max(...seaux.map(s=>s.total)));
+  const lignesGrille = [0,.25,.5,.75,1];
+
+  html += `<figure class="figure">
+    <figcaption>${t('capChart',{q:nomLog(partConso), u:unite(fl),
+      g:t(granConso==='period'?'gPeriode':granConso==='month'?'gMois':'gAnnee').toLowerCase()})}</figcaption>
+    ${cads.length>1 ? `<div class="legende">
+      ${cads.map(c=>`<span class="lgd"><i class="sw ${c}"></i>${nomCadran(c)}</span>`).join('')}
+    </div>` : ''}
+    <div class="chart" id="chart">
+      <div class="cgrid">
+        ${lignesGrille.map(g=>`<div class="cgline" style="bottom:${g*100}%">
+          <span class="cgval">${nf(maxi*g, maxi<10?1:0)}</span></div>`).join('')}
+      </div>
+      <div class="cbars">
+        ${seaux.map((s,i)=>{
+          const h = c => maxi>0 ? s.vals[c]/maxi*100 : 0;
+          const serre = s.total/maxi*100 < 8;
+          return `<div class="cbar" tabindex="0" data-bar="${i}">
+            <div class="ctot" style="bottom:calc(${s.total/maxi*100}% + 5px)">${nf(s.total,dec)}</div>
+            <div class="cstack">
+              ${cads.length>1
+                ? `<div class="cseg hp${serre?' flush':''}" style="height:${h('hp')}%"></div>
+                   <div class="cseg hc${s.vals.hp<=0?' solo':''}" style="height:${h('hc')}%"></div>`
+                : `<div class="cseg u" style="height:${h('u')}%"></div>`}
+            </div>
+            <div class="clab">${esc(s.lab).split('\n').join('<br>')}</div>
+          </div>`;}).join('')}
+      </div>
+      <div class="ctip" id="ctip"></div>
+    </div>
+  </figure>`;
+
+  html += `<div class="scroll"><table>
+    <thead><tr><th>${t('periode')}</th>
+      ${cads.map(c=>`<th>${cads.length>1?nomCadran(c):t('cadU')}</th>`).join('')}
+      <th>${t('total')}</th></tr></thead>
+    <tbody>${seaux.map(s=>`<tr>
+      <td>${esc(s.lab.split('\n').join(' '))}</td>
+      ${cads.map(c=>`<td class="num">${nf(s.vals[c],dec)}</td>`).join('')}
+      <td class="num"><b>${qte(s.total,fl)}</b></td></tr>`).join('')}
+      <tr class="tot"><td>${t('total')}</td>
+        ${cads.map(c=>`<td class="num">${nf(seaux.reduce((a,s)=>a+s.vals[c],0),dec)}</td>`).join('')}
+        <td class="num">${qte(seaux.reduce((a,s)=>a+s.total,0),fl)}</td></tr>
+    </tbody></table></div></div>`;
+
+  $('#vue-conso').innerHTML = html + blocSuivi(fl);
+  habillerSelects($('#vue-conso'));
+  const sp = $('#c-part');
+  if(sp) sp.onchange = ()=>{ partConso = sp.value; vueConso(); };
+  $('#vue-conso').querySelectorAll('[data-gran]').forEach(b=> b.onclick = ()=>{
+    granConso = b.dataset.gran; vueConso();
+  });
+  // infobulle : le chiffre au-dessus de la barre donne le total, l'infobulle le détail
+  $('#vue-conso').querySelectorAll('[data-bar]').forEach(b=>{
+    const montre = ()=> montrerTip(b, seaux[+b.dataset.bar], fl);
+    b.onmouseenter = montre; b.onfocus = montre;
+    b.onmouseleave = cacherTip; b.onblur = cacherTip;
+  });
+}
+
+function montrerTip(bar, s, fl){
+  const tip = $('#ctip'); if(!tip) return;
+  const cads = cadrans(fl), dec = FLUIDES[fl].dec;
+  tip.innerHTML = `<b>${esc(s.lab.split('\n').join(' '))}</b><br>`
+    + (cads.length>1 ? cads.map(c=>
+        `<span class="tk" style="background:var(--${c})"></span>${nomCadran(c)} <b>${nf(s.vals[c],dec)}</b>`
+      ).join('<br>') + '<br>' : '')
+    + `${t('total')} <b>${qte(s.total,fl)}</b>`
+    + (s.sous.length===1 ? `<br><span style="opacity:.75">${s.sous[0].j} ${t('jours')}</span>` : '');
+  const ch = $('#chart').getBoundingClientRect(), br = bar.getBoundingClientRect();
+  tip.style.left = (br.left - ch.left + br.width/2) + 'px';
+  tip.style.top  = (br.bottom - ch.top - (s.total ? bar.querySelector('.cstack').getBoundingClientRect().height : 0) - 14) + 'px';
+  tip.classList.add('on');
+}
+function cacherTip(){ const tip = $('#ctip'); if(tip) tip.classList.remove('on'); }
+
+/* ── vue 3 : relevés et factures ─────────────────────── */
+let relEdit = null, facEdit = null, pdfTampon = null;
+function msg(el, texte, type='err'){
+  if(el) el.innerHTML = texte ? `<div class="msg ${type}" style="margin-top:12px">${texte}</div>` : '';
+}
+
+function vueDonnees(){
+  let html = `<div class="block">
+    <div class="bhead"><div class="badge">${ico('liste',26)}</div><div>
+      <h2>${t('relevesEnr')}</h2></div></div>
+    <div class="scroll" style="margin-top:16px"><table id="rel-table"></table></div>
+    <div id="rel-audit"></div>
+  </div>`;
+
+  html += `<div class="block">
+    <div class="bhead"><div class="badge">${ico('euro',26)}</div><div>
+      <h2>${t('histTarifs')}</h2></div></div>
+    <div class="scroll" style="margin-top:16px"><table id="fac-table"></table></div>
+    ${S.signalements.length ? `<h4>${t('signalListe')}</h4>
+      ${[...S.signalements].reverse().map(g=>`<div class="signal">
+        <div><b>${dateFr(g.date)}</b>${g.facture ? ' · '+esc((S.factures.find(f=>f.id===g.facture)||{}).libelle||'') : ''}
+          <br>${esc(g.texte)}</div>
+        <button class="mini" data-sig="${g.id}">${t('signalTraite')}</button></div>`).join('')}` : ''}
+    <p class="signaler"><a href="#" id="fac-signaler">${t('signaler')}</a></p>
+  </div>`;
+
+  $('#vue-donnees').innerHTML = html;
+  tableRelev(); tableFac(); brancherDonnees();
+}
+
+function tableRelev(){
+  const el = $('#rel-table'); if(!el) return;
+  const fl = FL, cads = cadrans(fl), dec = FLUIDES[fl].dec;
+  const R = relevesDe(fl);
+  const anos = anomaliesDe(S.releves, fl);
+  const audit = $('#rel-audit');
+  if(audit) audit.innerHTML = anos.map(a=>
+    `<div class="msg ${a.t==='err'?'err':'warn'}" style="margin-top:10px">${a.m}</div>`).join('');
+  if(!R.length){ el.innerHTML = `<tr><td class="vide">—</td></tr>`; return; }
+  const cpts = compteursDe(fl);
+  const touche = id => anos.filter(a=>a.rels.includes(id));
+  const per = periodesMesurees(fl);
+  const finissantEn = id => per.find(p=> p.B.id === id);
+  /* Les compteurs d'un même logement se partagent ses colonnes : leurs index se
+     superposent dans la cellule au lieu d'ajouter deux colonnes. L'ordre de
+     grandeur suffit à reconnaître celui du chauffage. */
+  const groupes = [];
+  const gen = cpts.filter(c=> !c.logement);
+  if(gen.length) groupes.push({nom:gen[0].nom, cpts:gen});
+  for(const l of logementsDe()){
+    const g = cpts.filter(c=> c.logement === l.id);
+    if(g.length) groupes.push({nom:l.nom, cpts:g});
+  }
+  const colonnes = [];
+  groupes.forEach(g=> cads.forEach(cad=> colonnes.push({g, cad})));
+
+  el.innerHTML = `<thead><tr><th>${t('date')}</th>
+      ${colonnes.map(x=>`<th>${esc(x.g.nom)}${cads.length>1
+        ?'<br><span style="font-weight:400">'+nomCadranCourt(x.cad)+'</span>':''}</th>`).join('')}
+      <th>${t('consoDepuis')}</th><th>${t('parAn')}</th><th>${t('ecart')}</th></tr></thead><tbody>`
+    + [...R].reverse().map(r=>{
+      const a = touche(r.id), pire = a.some(x=>x.t==='err') ? 'err' : (a.length ? 'warn' : '');
+      return `<tr class="cliquable" data-ligne="${r.id}" title="${t('clicModifier')}">
+        <td>${pire?`<span title="${esc(a.map(x=>x.m.replace(/<[^>]+>/g,'')).join(' · '))}"
+          style="color:var(--${pire==='err'?'err':'warn'})">⚠</span> `:''}${dateFr(r.date)}</td>`
+      + colonnes.map(x=>`<td class="num">${x.g.cpts.map(c=>{
+            const v = idx(r, c.id, x.cad);
+            return v==null ? '—' : nf(v,dec);
+          }).join('<br>')}</td>`).join('')
+      + (()=>{ const p = finissantEn(r.id);
+          if(!p) return `<td class="num">—</td><td class="num">—</td><td class="num">—</td>`;
+          if(!p.valide) return `<td colspan="3" style="color:var(--ink-3); font-style:italic">${t('periodeInvalide')}</td>`;
+          return `<td class="num"><b>${qte(p.general, fl)}</b><br>
+            <span style="color:var(--ink-3); font-size:12px">${p.d} ${t('jours')}</span></td>
+            <td class="num">${p.d >= MINJ ? qte(p.general*365/p.d, fl) : '—'}</td>
+            <td class="num">${p.hasGen ? signe(p.ecart, fl) + `<br>
+              <span style="color:var(--ink-3); font-size:12px">${nf(p.somme?Math.abs(p.ecart/p.somme*100):0,1)} %</span>` : '—'}</td>`;
+        })()
+      + `</tr>`;}).join('') + `</tbody>`;
+  el.querySelectorAll('[data-ligne]').forEach(tr=> tr.onclick = ()=>{
+    relEdit = tr.dataset.ligne; ouvrir('rel');
+  });
+}
+
+function tableFac(){
+  const el = $('#fac-table'); if(!el) return;
+  const fl = FL, cads = cadrans(fl), dp = FLUIDES[fl].decPrix;
+  const F = facturesDe(fl);
+  if(!F.length){ el.innerHTML = `<tr><td class="vide">—</td></tr>`; return; }
+  const mt = mention(fl);
+  el.innerHTML = `<thead><tr><th>${t('facture')}</th><th>${t('periode')}</th>
+      ${cads.map(c=>`<th>${cads.length>1?nomCadran(c)+' '+mt
+        :t(fl==='eau'?'prixUnitEau':'prixUnitElec')}</th>`).join('')}
+      <th>${t('evolution')}</th><th>${t('abonnement')} ${mt}</th></tr></thead><tbody>`
+    + F.map((f,i)=>({f,i})).reverse().map(({f,i})=>{
+        const ref = cads[cads.length-1];
+        const p = prixDe(f,ref), pp = i>0 ? prixDe(F[i-1],ref) : null;
+        const ev = (pp && pp>0) ? (p/pp-1)*100 : null;
+        return `<tr class="cliquable" data-voir="${f.id}" title="${t('clicVoir')}">
+        <td>${esc(f.libelle)}</td>
+        <td class="num">${f.debut&&f.fin?dateFr(f.debut)+' → '+dateFr(f.fin):dateFr(f.date)}</td>
+        ${cads.map(c=>`<td class="num"><b>${nf(prixAff(f,c),dp)} €</b></td>`).join('')}
+        <td class="num" style="color:${ev==null?'var(--ink-3)':(ev>0?'var(--c3)':'var(--c1)')}">${
+          ev==null?'—':(ev>0?'+ ':'− ')+nf(Math.abs(ev),2)+' %'}</td>
+        <td class="num">${fixeAff(f)?eur(fixeAff(f)):'—'}</td>
+        </tr>`;}).join('') + `</tbody>`;
+  el.querySelectorAll('[data-voir]').forEach(tr=> tr.onclick = ()=> voirFac(tr.dataset.voir));
+}
+
+/* ── formulaires ─────────────────────────────────────── */
+function formRelev(){
+  const fl = FL, cads = cadrans(fl), cpts = compteursDe(fl), dec = FLUIDES[fl].dec;
+  const pas = dec ? '0.'+'0'.repeat(dec-1)+'1' : '1';
+  const champ = (c, cad) => `<div><label>${esc(c.nom)}${cads.length>1?' · '+nomCadranCourt(cad):''}</label>
+    <input type="number" step="${pas}" min="0" class="num" id="ri-${c.id.replace(/[:]/g,'_')}-${cad}"></div>`;
+  const gen = cpts.filter(c=>!c.logement), sous = cpts.filter(c=>c.logement);
+  return `<div id="rel-form">
+    <div class="grid g2">
+      <div><label>${t('dateReleve')}</label><input type="date" id="rel-date"></div>
+    </div>
+    ${gen.length ? `<h4>${fl==='elec'?t('compteurGenFac'):t('compteurGen')}</h4>
+      <div class="grid g5">${gen.map(c=> cads.map(cad=> champ(c,cad)).join('')).join('')}</div>` : ''}
+    <h4>${t('indexRel')}</h4>
+    <div class="grid g5">${sous.map(c=> cads.map(cad=> champ(c,cad)).join('')).join('')}</div>
+  </div>`;
+}
+const champId = (cid, cad) => '#ri-' + cid.replace(/[:]/g,'_') + '-' + cad;
+
+function chargerRelev(r){
+  relEdit = r ? r.id : null;
+  $('#rel-date').value = r ? r.date : new Date().toISOString().slice(0,10);
+  for(const c of compteursDe(FL)) for(const cad of cadrans(FL)){
+    const e = $(champId(c.id, cad));
+    if(e) e.value = r ? (idx(r, c.id, cad) != null ? idx(r, c.id, cad) : '') : '';
+  }
+  msg($('#rel-msg'),'');
+}
+
+function brancherRelev(){
+  $('#rel-save').onclick = ()=>{
+    const fl = FL, date = $('#rel-date').value;
+    if(!date) return msg($('#rel-msg'), t('errDate'));
+    const index = {};
+    for(const c of compteursDe(fl)){
+      const o = {}; let vide = 0;
+      for(const cad of cadrans(fl)){
+        const v = num($(champId(c.id, cad)));
+        if(v === null){ vide++; continue; }
+        if(v < 0) return msg($('#rel-msg'), t('errIndexManquant',{x:esc(c.nom)}));
+        o[cad] = v;
+      }
+      // le compteur général peut rester vide, un sous-compteur non
+      if(vide && c.logement) return msg($('#rel-msg'), t('errIndexManquant',{x:esc(c.nom)}));
+      if(!vide) index[c.id] = o;
+    }
+    if(!relEdit && relevesDe(fl).some(r=>r.date===date))
+      return msg($('#rel-msg'), t('errDoublon',{x:dateFr(date)}));
+
+    const cid = relEdit || '__neuf';
+    const cand = S.releves.filter(r=>r.id!==relEdit).concat([{id:cid, fluide:fl, date, index}]);
+    const bloquants = anomaliesDe(cand, fl).filter(a=> a.rels.includes(cid) && a.t==='err');
+    if(bloquants.length)
+      return msg($('#rel-msg'), `<b>${t('ctrlBloque')}</b><br>` + bloquants.map(a=>'• '+a.m).join('<br>'));
+
+    if(relEdit) marquer(Object.assign(S.releves.find(x=>x.id===relEdit), {date, index}));
+    else S.releves.push(marquer({id:uid(), fluide:fl, date, index}));
+    S.releves.sort((a,b)=> a.date<b.date?-1:1);
+    sauver(); fermer(); rafraichir();
+  };
+  $('#rel-cancel').onclick = fermer;
+  const sup = $('#rel-del');
+  if(sup) sup.onclick = ()=>{
+    const r = S.releves.find(x=>x.id===relEdit); if(!r) return;
+    if(!confirm(t('confSuppr',{x:dateFr(r.date)}))) return;
+    enterrer('releves', relEdit);
+    S.releves = S.releves.filter(x=>x.id!==relEdit);
+    sauver(); fermer(); rafraichir();
+  };
+}
+
+function formFac(){
+  const fl = FL;
+  const commun = `<div class="grid g2">
+      <div><label>${t('libelle')}</label><input type="text" id="fac-lib"></div>
+      <div><label>${t('dateFacture')}</label><input type="date" id="fac-date"></div>
+      <div><label>${t('debutPeriode')}</label><input type="date" id="fac-debut"></div>
+      <div><label>${t('finPeriode')}</label><input type="date" id="fac-fin"></div>
+    </div>`;
+  const prix = fl === 'eau'
+    ? `<h4>${t('prixFac')}</h4>
+       <div class="grid g2">
+         <div><label>${t('champLitre')}</label>
+           <input type="number" id="fac-litre" step="0.00001" min="0" placeholder="0.00585"></div>
+         <div><label>${t('champM3')}</label>
+           <input type="number" id="fac-prix" step="0.0001" min="0" placeholder="5.85"></div>
+         <div><label>${t('champHT')}</label>
+           <input type="number" id="fac-ht" step="0.0001" min="0" placeholder="5.31"></div>
+         <div><label>${t('champTva')}</label>
+           <input type="number" id="fac-tva" step="0.01" min="0" placeholder="7.63"></div>
+       </div>
+       <div class="grid g4" style="margin-top:12px">
+         <div><label>${t('champMontant')}</label><input type="number" id="fac-montant" step="0.01" min="0"></div>
+         <div><label>${t('champVolume')}</label><input type="number" id="fac-volume" step="0.001" min="0"></div>
+         <div><label>${t('champAboTtc')}</label><input type="number" id="fac-fixe" step="0.01" min="0"></div>
+         <div><label>${t('aboSemestres')}</label><select id="fac-sem">
+           <option value="1">1</option><option value="2">2</option></select></div>
+       </div>`
+    : `<h4>${t('prixFac')}</h4>
+       <div class="grid g2">
+         <div><label>${t('champHC')}</label>
+           <input type="number" id="fac-hc" step="0.00001" min="0" placeholder="0.1007"></div>
+         <div><label>${t('champHP')}</label>
+           <input type="number" id="fac-hp" step="0.00001" min="0" placeholder="0.1412"></div>
+       </div>
+       <div class="grid g4" style="margin-top:12px">
+         <div><label>${t('champAccise')}</label>
+           <input type="number" id="fac-accise" step="0.00001" min="0" placeholder="0.03085"></div>
+         <div><label>${t('champCta')}</label><input type="number" id="fac-cta" step="0.01" min="0"></div>
+         <div><label>${t('champAbo')}</label><input type="number" id="fac-fixe" step="0.01" min="0"></div>
+         <div><label>${t('champTva')}</label><input type="number" id="fac-tva" step="0.01" min="0" placeholder="20"></div>
+       </div>
+       <div class="grid g2" style="margin-top:12px">
+         <div><label>${t('champKva')}</label><input type="number" id="fac-kva" step="1" min="0" placeholder="24"></div>
+         <div><label>${t('champVolume')}</label>
+           <input type="number" id="fac-volume" step="1" min="0" placeholder="1030"></div>
+         <div><label>${t('champMontant')}</label>
+           <input type="number" id="fac-montant" step="0.01" min="0" placeholder="276.62"></div>
+       </div>`;
+  const parts = S.parts[fl] || {};
+  return `<div id="fac-form">
+    <div class="import">
+      <div class="row" style="margin-top:0">
+        <button class="ghost" id="fac-fichier-btn">${t('importFichier')}</button>
+        <input type="file" id="fac-fichier" hidden>
+        ${(S.factures.find(x=>x.id===facEdit) || {}).pdf
+          ? `<button class="ghost" id="fac-relire">${t('relirePdf')}</button>` : ''}
+      </div>
+      <textarea id="fac-coller" rows="3" placeholder="${t('importColler')}"></textarea>
+      <div id="fac-lu"></div>
+    </div>
+    <div class="msg info">${t(fl==='eau'?'avertTva':'avertElec')}</div>
+    ${commun}${prix}
+    <div class="grid g2" style="margin-top:12px">
+      <div><label>${t('repartAbo')}</label><select id="fac-fixe-mode">
+        <option value="egales">${t('rEgales')}</option>
+        <option value="surface">${t('rSurface')}</option>
+        <option value="prorata">${t('rConso')}</option>
+        <option value="manuel">${t('rManuel')}</option>
+        <option value="aucune">${t('rAucune')}</option></select></div>
+      <div><label>${t('prixRetenu')}</label><input type="text" id="fac-prix-calc" readonly tabindex="-1"></div>
+    </div>
+    <div id="fac-parts" hidden>
+      <h4>${t('partsManuelles')}</h4>
+      <div class="grid g4">${S.logements.map(l=>
+        `<div><label>${esc(l.nom)}</label>
+          <input type="number" class="num" step="0.01" min="0" data-part="${l.id}"
+                 value="${parts[l.id] != null ? parts[l.id] : ''}"></div>`).join('')}</div>
+      <p class="englobe" id="fac-parts-somme"></p>
+    </div>
+  </div>`;
+}
+
+function lireFac(){
+  const fl = FL;
+  const base = {id: facEdit || uid(), fluide: fl,
+    libelle: $('#fac-lib').value.trim() || t('facture')+' '+dateFr($('#fac-date').value),
+    date: $('#fac-date').value, debut: $('#fac-debut').value, fin: $('#fac-fin').value,
+    pdf: pdfTampon ? pdfTampon.data : undefined, pdfNom: pdfTampon ? pdfTampon.nom : undefined,
+    fixeMode: $('#fac-fixe-mode').value};
+  if(fl === 'eau') return Object.assign(base, {
+    litre: num($('#fac-litre')), prix: num($('#fac-prix')),
+    ht: num($('#fac-ht')), tva: num($('#fac-tva')),
+    montant: num($('#fac-montant')), volume: num($('#fac-volume')),
+    fixe: num($('#fac-fixe')) || 0, semestres: +$('#fac-sem').value || 1});
+  return Object.assign(base, {
+    pu: {hc: num($('#fac-hc')) || 0, hp: num($('#fac-hp')) || 0},
+    accise: num($('#fac-accise')) || 0, cta: num($('#fac-cta')) || 0,
+    abo: num($('#fac-fixe')) || 0, kva: num($('#fac-kva')),
+    volume: num($('#fac-volume')), montant: num($('#fac-montant')),
+    tva: num($('#fac-tva')) != null ? num($('#fac-tva')) : 20});
+}
+function majPrix(){
+  const f = lireFac(), cads = cadrans(FL), dp = FLUIDES[FL].decPrix;
+  const px = cads.map(c=> prixDe(f,c)).filter(v=>v>0);
+  $('#fac-prix-calc').value = px.length
+    ? cads.map(c=> (cads.length>1?nomCadranCourt(c)+' ':'') + nf(prixAff(f,c),dp) + ' €').join(' · ')
+      + ' ' + mention(FL) + ' · ' + sourcePrix(f)
+    : '';
+  const manuel = $('#fac-fixe-mode').value === 'manuel';
+  $('#fac-parts').hidden = !manuel;
+  if(manuel){
+    let s = 0;
+    document.querySelectorAll('#fac-parts [data-part]').forEach(i=>{
+      const v = parseFloat(String(i.value).replace(',','.')); if(!isNaN(v)) s += v; });
+    $('#fac-parts-somme').textContent = t('partsSomme',{x:nf(s,1)})
+      + (Math.abs(s-100) > 0.05 ? ' · ' + t('partsPasCent') : '');
+  }
+}
+function chargerFac(f){
+  const fl = FL;
+  facEdit = f ? f.id : null;
+  $('#fac-lib').value   = f ? f.libelle : '';
+  $('#fac-date').value  = f ? f.date : new Date().toISOString().slice(0,10);
+  $('#fac-debut').value = f && f.debut ? f.debut : '';
+  $('#fac-fin').value   = f && f.fin ? f.fin : '';
+  if(fl === 'eau'){
+    $('#fac-litre').value   = f && f.litre!=null ? f.litre : '';
+    $('#fac-prix').value    = f && f.prix!=null ? f.prix : '';
+    $('#fac-ht').value      = f && f.ht!=null ? f.ht : '';
+    $('#fac-tva').value     = f && f.tva!=null ? f.tva : '';
+    $('#fac-montant').value = f && f.montant!=null ? f.montant : '';
+    $('#fac-volume').value  = f && f.volume!=null ? f.volume : '';
+    $('#fac-fixe').value    = f && f.fixe!=null ? f.fixe : '';
+    $('#fac-sem').value     = f && f.semestres ? f.semestres : 2;
+  }else{
+    $('#fac-hc').value     = f && f.pu && f.pu.hc!=null ? f.pu.hc : '';
+    $('#fac-hp').value     = f && f.pu && f.pu.hp!=null ? f.pu.hp : '';
+    $('#fac-accise').value = f && f.accise!=null ? f.accise : '';
+    $('#fac-cta').value    = f && f.cta!=null ? f.cta : '';
+    $('#fac-fixe').value   = f && f.abo!=null ? f.abo : '';
+    $('#fac-tva').value    = f && f.tva!=null ? f.tva : 20;
+    $('#fac-kva').value    = f && f.kva!=null ? f.kva : '';
+    $('#fac-volume').value = f && f.volume!=null ? f.volume : '';
+    $('#fac-montant').value = f && f.montant!=null ? f.montant : '';
+  }
+  $('#fac-fixe-mode').value = f ? (f.fixeMode||'egales') : (fl==='elec' ? 'manuel' : 'egales');
+  majPrix(); msg($('#fac-msg'),'');
+}
+
+function brancherFac(){
+  const fl = FL;
+  /* seulementVide : relecture d'un PDF déjà joint, on complète sans écraser ce
+     qui a été saisi ou corrigé à la main depuis. */
+  const reprendre = (txt, seulementVide) => {
+    const r = analyserFacture(txt, fl);
+    if(!r.trouves.length) return msg($('#fac-lu'), t('importRien'), 'warn');
+    const remplis = [];
+    const pose = (sel, v, cle)=>{
+      const e = $(sel);
+      if(!e || v == null) return;
+      if(seulementVide && String(e.value).trim() !== '') return;
+      e.value = v; if(cle) remplis.push(t(cle));
+    };
+    pose('#fac-litre', r.litre, 'champLitre');
+    pose('#fac-fixe', r.fixe, fl === 'eau' ? 'champAboTtc' : 'champAbo');
+    pose('#fac-montant', r.montant, 'champMontant');
+    pose('#fac-volume', r.volume, 'champVolume');
+    pose('#fac-hc', r.hc, 'champHC');   pose('#fac-hp', r.hp, 'champHP');
+    pose('#fac-accise', r.accise, 'champAccise');
+    pose('#fac-cta', r.cta, 'champCta'); pose('#fac-kva', r.kva, 'champKva');
+    pose('#fac-debut', r.debut, 'debutPeriode');
+    pose('#fac-fin', r.fin, 'finPeriode');
+    if(r.fin && !seulementVide){
+      if(!$('#fac-lib').value.trim())
+        $('#fac-lib').value = (fl==='eau' ? 'Facture SAUR ' : 'EDF ') + dateFr(r.fin);
+      if(!$('#fac-date').value) $('#fac-date').value = r.fin;
+    }
+    majPrix();
+    if(!seulementVide)
+      msg($('#fac-lu'), t('importLu',{x:r.trouves.map(k=>t(k)).join(', ')}), 'info');
+    else if(remplis.length)
+      msg($('#fac-lu'), t('relireFait',{x:remplis.join(', ')}), 'info');
+    else
+      msg($('#fac-lu'), t('relireRien'), 'info');
+  };
+  // Le PDF déjà joint est relu par la page elle-même, sans redemander le fichier.
+  const relire = $('#fac-relire');
+  if(relire) relire.onclick = async ()=>{
+    const f = S.factures.find(x=>x.id===facEdit);
+    if(!f || !f.pdf) return;
+    const lu = await texteDuPdf(await blobPdf(f.pdf).arrayBuffer());
+    $('#fac-coller').value = lu.txt;
+    if(lu.etat === 'vide')           msg($('#fac-lu'), t('importPdfMuet'), 'warn');
+    else if(lu.etat === 'illisible') msg($('#fac-lu'), t('importPdfCode'), 'warn');
+    else reprendre(lu.txt, true);
+  };
+  $('#fac-coller').oninput = e => { if(e.target.value.trim().length > 40) reprendre(e.target.value); };
+  $('#fac-fichier-btn').onclick = ()=> $('#fac-fichier').click();
+  $('#fac-fichier').onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    if(/\.pdf$/i.test(f.name)){
+      if(f.size <= 1500000){
+        pdfTampon = {nom:f.name, data: await new Promise(res=>{ const fr = new FileReader();
+          fr.onload = ()=> res(fr.result); fr.readAsDataURL(f); })};
+      }else msg($('#fac-lu'), t('pdfTropGros'), 'warn');
+      const lu = await texteDuPdf(await f.arrayBuffer());
+      $('#fac-coller').value = lu.txt;              // toujours montrer ce qui a été lu
+      if(lu.etat === 'vide')          msg($('#fac-lu'), t('importPdfMuet'), 'warn');
+      else if(lu.etat === 'illisible') msg($('#fac-lu'), t('importPdfCode'), 'warn');
+      else if(!analyserFacture(lu.txt, fl).trouves.length)
+        msg($('#fac-lu'), t('importPdfInconnu',{n:lu.txt.length}), 'warn');
+      else reprendre(lu.txt);
+    }else{
+      const txt = await f.text();
+      $('#fac-coller').value = txt;
+      reprendre(txt);
+    }
+    e.target.value = '';
+  };
+  ['#fac-litre','#fac-prix','#fac-ht','#fac-tva','#fac-montant','#fac-volume','#fac-fixe',
+   '#fac-hc','#fac-hp','#fac-accise','#fac-cta','#fac-kva'].forEach(x=>{
+     const e = $(x); if(e) e.oninput = majPrix; });
+  const sem = $('#fac-sem'); if(sem) sem.onchange = majPrix;
+  $('#fac-fixe-mode').onchange = majPrix;
+  document.querySelectorAll('#fac-parts [data-part]').forEach(i=> i.oninput = majPrix);
+
+  $('#fac-save').onclick = ()=>{
+    const f = lireFac();
+    if(!f.date) return msg($('#fac-msg'), t('errDate'));
+    const px = Math.max(...cadrans(fl).map(c=> prixDe(f,c)));
+    if(!(px > 0)) return msg($('#fac-msg'), t('errPrixManquant'));
+    if(px > 30) return msg($('#fac-msg'), t('errPrixFou',{x:nf(px,2)}));
+    if(f.fixeMode === 'manuel'){
+      S.parts[fl] = S.parts[fl] || {};
+      document.querySelectorAll('#fac-parts [data-part]').forEach(i=>{
+        const v = parseFloat(String(i.value).replace(',','.'));
+        S.parts[fl][i.dataset.part] = isNaN(v) ? 0 : v;
+      });
+    }
+    if(facEdit) marquer(Object.assign(S.factures.find(x=>x.id===facEdit), f));
+    else S.factures.push(marquer(f));
+    S.factures.sort((a,b)=> (a.date||'')<(b.date||'')?-1:1);
+    sauver(); fermer(); rafraichir();
+  };
+  $('#fac-cancel').onclick = fermer;
+}
+
+/* Consultation d'une facture : lecture seule, la correction est ailleurs. */
+function voirFac(id){
+  const f = S.factures.find(x=>x.id===id); if(!f) return;
+  const fl = f.fluide, cads = cadrans(fl), dp = FLUIDES[fl].decPrix;
+  const li = (a,b)=> b ? `<tr><td>${a}</td><td class="num">${b}</td></tr>` : '';
+  $('#modal').innerHTML = `<div class="voile"><div class="panneau">
+    <div class="bhead"><div class="badge">${ico('euro',26)}</div><div>
+      <h2>${esc(f.libelle)}</h2></div></div>
+    <table><tbody>
+      ${li(t('dateFacture'), dateFr(f.date))}
+      ${li(t('periode'), f.debut&&f.fin ? dateFr(f.debut)+' → '+dateFr(f.fin)+` · ${jours(f.debut,f.fin)} ${t('jours')}` : '')}
+      ${fl==='eau' ? `
+        ${li(t('champVolume'), f.volume ? nf(f.volume,0)+' m³' : '')}
+        ${li(t('champMontant'), f.montant ? eur(f.montant) : '')}
+        ${li(t('champLitre'), f.litre ? nf(f.litre,5)+' €' : '')}
+        ${li(t('champM3'), f.prix ? nf(f.prix,4)+' €' : '')}
+        ${li(t('champHT'), f.ht ? nf(f.ht,4)+' €' : '')}
+        ${li(t('aboSemestres'), f.semestres || 2)}` : `
+        ${li(t('champHC'), f.pu&&f.pu.hc ? nf(f.pu.hc,5)+' €' : '')}
+        ${li(t('champHP'), f.pu&&f.pu.hp ? nf(f.pu.hp,5)+' €' : '')}
+        ${li(t('champAccise'), f.accise ? nf(f.accise,5)+' €' : '')}
+        ${li(t('champCta'), f.cta ? eur(f.cta) : '')}
+        ${li(t('champKva'), f.kva ? nf(f.kva,0) : '')}
+        ${li(t('champVolume'), f.volume ? nf(f.volume,0)+' kWh' : '')}
+        ${li(t('champMontant'), f.montant ? eur(f.montant) : '')}
+        ${li(t('champTva'), nf(tauxTva(f),2)+' %')}`}
+      ${li(t('abonnement') + ' ' + mention(fl), fixeAff(f) ? eur(fixeAff(f)) : '')}
+      ${li(t('repartAbo'), t({surface:'rSurface',egales:'rEgales',prorata:'rConso',
+                              manuel:'rManuel',aucune:'rAucune'}[modeFixe(f)]))}
+      <tr class="tot"><td>${t('prixRetenu')} ${mention(fl)}</td>
+        <td class="num">${cads.map(c=> (cads.length>1?nomCadranCourt(c)+' ':'')
+          + nf(prixAff(f,c),dp)+' €').join(' · ')} · ${sourcePrix(f)}</td></tr>
+    </tbody></table>
+    ${f.pdf ? `<h4>${t('pdfJoint')}</h4><iframe id="v-pdf" class="pdfvue"></iframe>`
+            : `<p class="englobe">${t('pdfAucun')}</p>`}
+    <div class="row"><button class="act" id="v-edit">${t('modifier')}</button>
+      <button class="ghost" id="v-close">${t('fermer')}</button>
+      ${f.pdf ? `<button class="ghost" id="v-ouvrir">${t('pdfOuvrir')}</button>` : ''}
+      <button class="ghost" id="v-joindre">${f.pdf ? t('pdfRemplacer') : t('pdfJoindre')}</button>
+      <button class="ghost" id="v-suppr" style="margin-left:auto; flex:none;
+        border-color:var(--err); color:var(--err)">${t('supprimer')}</button>
+      <input type="file" id="v-fichier" accept="application/pdf,.pdf" hidden></div>
+  </div></div>`;
+  $('#modal').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('#v-close').onclick = fermer;
+  // fermer() remet les identifiants à zéro : on repose celui-ci après, pas avant
+  $('#v-edit').onclick = ()=>{ fermer(); facEdit = id; ouvrir('fac'); };
+  $('#v-suppr').onclick = ()=>{
+    if(!confirm(t('confSupprFac',{x:f.libelle}))) return;
+    enterrer('factures', id);
+    S.factures = S.factures.filter(x=>x.id !== id);
+    sauver(); fermer(); rafraichir();
+  };
+  if(f.pdf){
+    libererPdf();
+    urlPdf = URL.createObjectURL(blobPdf(f.pdf));
+    $('#v-pdf').src = urlPdf;
+    $('#v-ouvrir').onclick = ()=> window.open(urlPdf, '_blank');
+  }
+  $('#v-joindre').onclick = ()=> $('#v-fichier').click();
+  $('#v-fichier').onchange = async e => {
+    const fic = e.target.files[0]; e.target.value = '';
+    if(!fic) return;
+    if(fic.size > 1500000) return alert(t('pdfTropGros'));
+    f.pdf = await new Promise(res=>{ const fr = new FileReader();
+      fr.onload = ()=> res(fr.result); fr.readAsDataURL(fic); });
+    f.pdfNom = fic.name; marquer(f);
+    sauver(); voirFac(id);
+  };
+  const voile = $('#modal .voile');
+  voile.onclick = e => { if(e.target === voile) fermer(); };
+}
+
+/* Signalement : le lecteur décrit ce qui lui semble faux, sans rien modifier. */
+function ouvrirSignal(){
+  $('#modal').innerHTML = `<div class="voile"><div class="panneau">
+    <div class="bhead"><div class="badge">⚠</div><div>
+      <h2>${t('signaler')}</h2><p>${t('signalerS')}</p></div></div>
+    <div class="grid g2">
+      <div><label>${t('signalConcerne')}</label><select id="sig-fac">
+        <option value="">${t('signalAucune')}</option>
+        ${S.factures.map(f=>`<option value="${f.id}">${esc(f.libelle)}</option>`).join('')}</select></div>
+    </div>
+    <div style="margin-top:12px"><label>${t('signalTexte')}</label>
+      <textarea id="sig-texte" rows="4"></textarea></div>
+    <div class="row"><button class="act" id="sig-save">${t('signalEnvoyer')}</button>
+      <button class="ghost" id="sig-close">${t('fermer')}</button></div>
+    <div id="sig-msg"></div>
+  </div></div>`;
+  $('#modal').hidden = false;
+  document.body.style.overflow = 'hidden';
+  habillerSelects($('#modal'));
+  $('#sig-close').onclick = fermer;
+  const voile = $('#modal .voile');
+  voile.onclick = e => { if(e.target === voile) fermer(); };
+  $('#sig-texte').focus();
+  $('#sig-save').onclick = ()=>{
+    const texte = $('#sig-texte').value.trim();
+    if(!texte) return msg($('#sig-msg'), t('signalVide'));
+    S.signalements.push(marquer({id:uid(), fluide:FL, date:new Date().toISOString().slice(0,10),
+                         facture:$('#sig-fac').value, texte}));
+    sauver(); fermer(); rafraichir();
+  };
+}
+
+function ouvrir(type){
+  const rel = type === 'rel';
+  $('#modal').innerHTML = `<div class="voile"><div class="panneau">
+    <div class="bhead"><div class="badge">${ico(rel?'liste':'euro',26)}</div><div>
+      <h2>${rel ? t('saisieReleve') : t('saisieFacture')} · ${t(FL==='eau'?'fEau':'fElec')}</h2>
+      ${rel ? '' : `<p>${t('saisieFactureS')}</p>`}</div></div>
+    ${rel ? formRelev() : formFac()}
+    <div class="row"><button class="act" id="${type}-save">${t('enregistrer')}</button>
+      <button class="ghost" id="${type}-cancel">${t('fermer')}</button>
+      ${rel && relEdit ? `<button class="ghost" id="rel-del" style="margin-left:auto; flex:none;
+        border-color:var(--err); color:var(--err)">${t('supprimer')}</button>` : ''}</div>
+    <div id="${type}-msg"></div>
+  </div></div>`;
+  $('#modal').hidden = false;
+  document.body.style.overflow = 'hidden';
+  // les champs sont remplis avant d'habiller les listes : sinon le bouton d'une
+  // liste garde l'étiquette de la première option au lieu de la valeur chargée
+  if(rel){ chargerRelev(S.releves.find(r=>r.id===relEdit) || null); brancherRelev(); }
+  else   { chargerFac(S.factures.find(f=>f.id===facEdit) || null); brancherFac(); }
+  habillerSelects($('#modal'));
+  const voile = $('#modal .voile');
+  voile.onclick = e => { if(e.target === voile) fermer(); };
+  const champ = $('#modal input'); if(champ) champ.focus();
+}
+function fermer(){
+  libererPdf(); pdfTampon = null;
+  $('#modal').hidden = true; $('#modal').innerHTML = '';
+  document.body.style.overflow = ''; relEdit = facEdit = null;
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape' && !$('#modal').hidden) fermer();
+});
+
+/* Avale une sauvegarde, qu'elle vienne d'un fichier ou d'un copier-coller. */
+function avaler(texte){
+  try{
+    let d = JSON.parse(texte);
+    if(!Array.isArray(d.logements)) throw 0;
+    // une sauvegarde de l'ancienne page eau se reconnaît à ses relevés sans fluide
+    if(!d.compteurs) d = convertirAncienneEau(d);
+    const {etat, rap} = fusionner(S, d);
+    if(!confirm(t('confFusion',{a:rap.ajoutes, m:rap.majs, i:rap.ignores}))) return;
+    S = etat; sauver(); rafraichir();
+    msg($('#reg-msg'), t('fusionFaite',{a:rap.ajoutes, m:rap.majs}), 'info');
+  }catch(err){ msg($('#reg-msg'), t('errFichier')); }
+}
+
+/* Les commandes de sauvegarde ne méritent pas une carte : rien n'y est à faire
+   au quotidien, l'enregistrement dans le navigateur étant automatique. Elles
+   vivent repliées en bas de page, où l'on va les chercher quand on en a besoin. */
+function blocSauvegarde(){
+  const c = lireSync();
+  return `<details id="p-donnees"><summary>${t('pageDonnees')}</summary>
+    <div class="corps">
+      <h4 style="margin-top:0">${t('syncTitre')}</h4>
+      <p class="englobe" style="margin:0 0 10px">${t('syncS')}</p>
+      <div class="grid g2">
+        <div><label>${t('syncDepot')}</label>
+          <input type="text" id="sync-depot" placeholder="victoria/gascourt-donnees"
+                 value="${esc(c.depot || '')}"></div>
+        <div><label>${t('syncChemin')}</label>
+          <input type="text" id="sync-chemin" placeholder="gascourt.json"
+                 value="${esc(c.chemin || 'gascourt.json')}"></div>
+      </div>
+      <div style="margin-top:12px"><label>${t('syncJetonChamp')}</label>
+        <input type="password" id="sync-jeton" autocomplete="off"
+               value="${esc(c.jeton || '')}"></div>
+      <div class="row"><button class="act" id="sync-go">${t('syncMaintenant')}</button>
+        <button class="ghost" id="sync-oublier">${t('syncOublier')}</button></div>
+      <p class="englobe" id="sync-etat"></p>
+      <h4>${t('pieAuto') ? t('sauvegardeLocale') : ''}</h4>
+      <p class="auto" style="margin:0 0 12px">${t('pieAuto')}</p>
+    <div class="row" style="margin-top:0">
+      <button class="ghost" id="exp">${t('exporter')}</button>
+      <button class="ghost" id="imp-btn">${t('importer')}</button>
+      <input type="file" id="imp" hidden>
+      <button class="ghost" id="reset" style="border-color:var(--err); color:var(--err)">${t('effacer')}</button>
+    </div>
+    <h4>${t('collerFichier')}</h4>
+    <p class="englobe" style="margin:0 0 10px">${t('collerFichierS')}</p>
+    <textarea id="imp-texte" rows="4" spellcheck="false"></textarea>
+    <div class="row"><button class="ghost" id="imp-coller">${t('importerTexte')}</button></div>
+    <h4>${t('reprendreEau')}</h4>
+    <p class="englobe" style="margin:0 0 10px">${t('reprendreEauS')}</p>
+    <div class="row" style="margin-top:0"><button class="ghost" id="reprise">${t('reprendreEau')}</button></div>
+    <div id="reg-msg"></div>
+      </div></details>`;
+}
+
+function brancherDonnees(){
+  $('#fac-signaler').onclick = e => { e.preventDefault(); ouvrirSignal(); };
+  $('#vue-donnees').querySelectorAll('[data-sig]').forEach(b=> b.onclick = ()=>{
+    enterrer('signalements', b.dataset.sig);
+    S.signalements = S.signalements.filter(g=>g.id !== b.dataset.sig);
+    sauver(); vueDonnees();
+  });
+
+}
+
+/* Commandes de sauvegarde : elles vivent dans le pied de page. */
+function brancherSauvegarde(){
+  if(!$('#exp')) return;
+  const cs = $('#sync-go');
+  if(cs){
+    const retenir = ()=>{
+      const c = lireSync();
+      c.depot  = $('#sync-depot').value.trim();
+      c.chemin = $('#sync-chemin').value.trim() || 'gascourt.json';
+      c.jeton  = $('#sync-jeton').value.trim();
+      ecrireSync(c);
+    };
+    ['#sync-depot','#sync-chemin','#sync-jeton'].forEach(x=> $(x).onchange = retenir);
+    cs.onclick = async ()=>{
+      retenir();
+      cs.disabled = true;
+      majEtatSync({etat:'occupe'});
+      const r = await synchroniser(true);
+      cs.disabled = false;
+      majEtatSync(r);
+      if(r.etat === 'ok') rafraichir();
+    };
+    $('#sync-oublier').onclick = ()=>{
+      if(!confirm(t('syncConfOubli'))) return;
+      localStorage.removeItem(CLE_SYNC);
+      rafraichir();
+    };
+    majEtatSync(null);
+  }
+  $('#exp').onclick = ()=>{
+    S.exporte = maintenant(); sauver();
+    const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gascourt-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('#imp-btn').onclick = ()=> $('#imp').click();
+  $('#imp').onchange = e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const fr = new FileReader();
+    fr.onload = ()=> avaler(fr.result);
+    fr.readAsText(file); e.target.value = '';
+  };
+  // même chemin pour un fichier choisi et pour un contenu collé : la fenêtre de
+  // choix de fichier grise parfois les .json, il faut une porte de secours
+  $('#imp-coller').onclick = ()=>{
+    const texte = $('#imp-texte').value.trim();
+    if(!texte) return msg($('#reg-msg'), t('collerVide'), 'warn');
+    avaler(texte);
+  };
+  $('#reprise').onclick = ()=>{
+    let b = null;
+    try{ b = JSON.parse(localStorage.getItem(KEY_EAU)); }catch(e){}
+    if(!b || !Array.isArray(b.logements)) return msg($('#reg-msg'), t('reprisRien'), 'warn');
+    const d = convertirAncienneEau(b);
+    const {etat, rap} = fusionner(S, d);
+    S = etat; sauver(); rafraichir();
+    msg($('#reg-msg'), t('reprisFait',{a:d.releves.length, f:d.factures.length})
+      + ' · ' + t('fusionFaite',{a:rap.ajoutes, m:rap.majs}), 'info');
+  };
+  $('#reset').onclick = ()=>{
+    if(!confirm(t('confReset'))) return;
+    S = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    relEdit = facEdit = null; sauver(); rafraichir();
+  };
+}
+
+/* ── synchronisation avec un dépôt privé ─────────────────
+   Les données vivent dans un fichier d'un dépôt GitHub privé. Chaque appareil
+   en garde une copie locale, travaille dessus hors ligne, et la réconcilie
+   quand il retrouve le réseau. Trois raisons d'avoir choisi ce magasin plutôt
+   qu'une base de données : il n'y a aucun serveur à entretenir, chaque
+   modification devient un commit daté et signé, donc on sait qui a changé
+   quoi et l'on peut revenir en arrière, et l'offre gratuite ne s'endort pas
+   au bout d'une semaine, ce qui compte pour un outil employé tous les deux mois.
+
+   La réconciliation ne fait pas gagner le dernier arrivé : elle emploie la
+   fusion déjà écrite pour l'import de fichiers, qui compare enregistrement par
+   enregistrement et respecte les suppressions. Deux personnes qui saisissent
+   en même temps ne s'effacent donc pas l'une l'autre. */
+
+const CLE_SYNC = KEY + '-sync';
+const lireSync  = () => { try{ return JSON.parse(localStorage.getItem(CLE_SYNC)) || {}; }
+                          catch(e){ return {}; } };
+const ecrireSync = o => localStorage.setItem(CLE_SYNC, JSON.stringify(o));
+const syncPret = () => { const c = lireSync(); return !!(c.depot && c.jeton); };
+
+/* Le jeton n'entre jamais dans l'export : c'est un identifiant d'appareil, pas
+   une donnée du dossier. Il vit sous sa propre clé, à côté de l'état. */
+
+/* base64 et UTF-8 : les noms portent des accents, un passage naïf par btoa
+   les mutile. */
+const enBase64 = s => {
+  const o = new TextEncoder().encode(s);
+  let b = ''; for(const x of o) b += String.fromCharCode(x);
+  return btoa(b);
+};
+const deBase64 = b =>
+  new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g,'')), c=>c.charCodeAt(0)));
+
+function urlSync(c){
+  return 'https://api.github.com/repos/' + c.depot + '/contents/'
+    + (c.chemin || 'gascourt.json').split('/').map(encodeURIComponent).join('/');
+}
+async function appelSync(c, methode, corps){
+  return fetch(urlSync(c), {
+    method: methode,
+    headers: {
+      Authorization: 'Bearer ' + c.jeton,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    body: corps ? JSON.stringify(corps) : undefined
+  });
+}
+
+/* Ce qu'on envoie : l'état, sans les réglages d'affichage propres à l'appareil. */
+function etatAEnvoyer(){
+  const {lang, ...reste} = S;
+  return JSON.stringify(reste, null, 1);
+}
+
+/* Va chercher la version distante. Renvoie null si le fichier n'existe pas
+   encore, ce qui est le cas normal au premier envoi. */
+async function tirer(c){
+  const r = await appelSync(c, 'GET');
+  if(r.status === 404) return {absent:true};
+  if(r.status === 401 || r.status === 403) throw new Error('jeton');
+  if(!r.ok) throw new Error('http ' + r.status);
+  const j = await r.json();
+  return {sha: j.sha, contenu: JSON.parse(deBase64(j.content))};
+}
+
+async function pousser(c, sha, message){
+  const r = await appelSync(c, 'PUT', {
+    message: message || ('Gascourt · ' + new Date().toISOString().slice(0,16).replace('T',' ')),
+    content: enBase64(etatAEnvoyer()),
+    sha: sha || undefined
+  });
+  if(r.status === 409 || r.status === 422) return {conflit:true};
+  if(r.status === 401 || r.status === 403) throw new Error('jeton');
+  if(!r.ok) throw new Error('http ' + r.status);
+  const j = await r.json();
+  return {sha: j.content && j.content.sha};
+}
+
+/* Un aller-retour complet : on prend ce qui est là-bas, on le fond avec ce
+   qu'on a, on renvoie le résultat. Si quelqu'un a écrit entre notre lecture et
+   notre écriture, GitHub refuse ; on recommence avec la version fraîche plutôt
+   que d'écraser son travail. */
+let syncEnCours = false;
+async function synchroniser(manuelle){
+  const c = lireSync();
+  if(!c.depot || !c.jeton) return {etat:'absent'};
+  if(syncEnCours) return {etat:'occupe'};
+  syncEnCours = true;
+  try{
+    let rapport = null, sha = c.sha;
+    for(let essai = 0; essai < 3; essai++){
+      const distant = await tirer(c);
+      if(distant.absent){ sha = null; }
+      else{
+        sha = distant.sha;
+        const {etat, rap} = fusionner(S, distant.contenu);
+        S = etat; sauver(true);
+        rapport = rap;
+      }
+      const envoi = await pousser(c, sha, manuelle ? 'Gascourt · synchronisation manuelle' : null);
+      if(!envoi.conflit){
+        c.sha = envoi.sha; c.dernier = new Date().toISOString();
+        ecrireSync(c);
+        return {etat:'ok', rap:rapport};
+      }
+    }
+    return {etat:'conflit'};
+  }catch(e){
+    return {etat: e.message === 'jeton' ? 'jeton' : 'reseau', message: e.message};
+  }finally{
+    syncEnCours = false;
+  }
+}
+
+/* On n'envoie pas à chaque frappe : les saisies vont par rafales, et chaque
+   envoi est un commit. On attend que ça se calme. */
+let minuterie = null;
+function programmerPoussee(){
+  if(!syncPret()) return;
+  clearTimeout(minuterie);
+  minuterie = setTimeout(async ()=>{
+    const r = await synchroniser(false);
+    majEtatSync(r);
+  }, 4000);
+}
+
+function majEtatSync(r){
+  const el = $('#sync-etat');
+  if(!el) return;
+  const c = lireSync();
+  if(!r){
+    el.textContent = syncPret()
+      ? (c.dernier ? t('syncDernier',{d:new Date(c.dernier).toLocaleString(loc())}) : t('syncJamais'))
+      : t('syncInactive');
+    el.className = 'englobe';
+    return;
+  }
+  const mots = {ok:'syncFaite', absent:'syncInactive', occupe:'syncEnCours',
+                conflit:'syncConflit', jeton:'syncJeton', reseau:'syncReseau'};
+  el.textContent = t(mots[r.etat] || 'syncReseau',
+    r.rap ? {a:r.rap.ajoutes, m:r.rap.majs} : {a:0, m:0});
+  el.className = 'englobe' + (r.etat === 'ok' ? '' : ' alerte');
+}
+
+/* ── reprise des montants depuis le texte d'une facture ── */
+const nbFac = x => parseFloat(String(x).replace(/[\s  ]/g,'').replace(',','.'));
+const MONT = '(-?\\d[\\d ]*,\\d{2})';   // deux décimales exactes : sépare « 16,7117,63 »
+function analyserFacture(txt, fl){
+  const T2 = String(txt).replace(/[  ]/g,' ');
+  const out = {trouves:[]}; let m;
+
+  // dates : les deux plus récentes bornent la période facturée
+  const iso = [];
+  (T2.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g) || []).forEach(d=>{
+    const [j,mo,a] = d.split('/'); iso.push(a+'-'+mo+'-'+j);
+  });
+  if(iso.length >= 2){ iso.sort(); out.debut = iso[iso.length-2]; out.fin = iso[iso.length-1];
+    out.trouves.push('luPeriode'); }
+
+  if(fl === 'eau'){
+    if((m = T2.match(/prix\s*au\s*litre[^\d]{0,60}(\d[.,]\d{3,6})/i)))
+      { out.litre = nbFac(m[1]); out.trouves.push('luLitre'); }
+    if((m = T2.match(new RegExp('abonnement[^\\d-]{0,30}'+MONT+'[^\\d-]{0,30}'+MONT,'i'))))
+      { out.fixe = nbFac(m[2]); out.trouves.push('luFixe'); }
+    if((m = T2.match(new RegExp('montant\\s*factur[ée][^\\d-]{0,30}'+MONT+'[^\\d-]{0,30}'+MONT,'i'))))
+      { out.montant = nbFac(m[2]); out.trouves.push('luMontant'); }
+    else if((m = T2.match(new RegExp('total\\s*facture\\s*ttc[^\\d-]{0,20}'+MONT,'i'))))
+      { out.montant = nbFac(m[1]); out.trouves.push('luMontant'); }
+    if((m = T2.match(/total\s*ann[ée]e\s*\d{4}\s*:?\s*(\d[\d ]*)\s*m³/i)))
+      { out.volume = nbFac(m[1]); out.trouves.push('luVolume'); }
+    else if((m = T2.match(/consommation[^\d]{0,20}(\d[\d ]*)\s*m³/i)))
+      { out.volume = nbFac(m[1]); out.trouves.push('luVolume'); }
+    return out;
+  }
+
+  /* Électricité, mise en page EDF. La facture s'organise en trois blocs bornés
+     par leurs totaux : Abonnement, Consommation, Taxes et Contributions. On
+     travaille bloc par bloc plutôt qu'au fil du texte, sinon le premier montant
+     rencontré après le mot « abonnement » est celui d'une autre rubrique. */
+  /* Un bloc va du total qui le ferme jusqu'à l'en-tête qui l'ouvre, cherché en
+     remontant. Se contenter d'une fenêtre de longueur fixe ferait déborder le
+     bloc « Consommation » sur celui de l'abonnement, et la période lue serait
+     celle d'une tranche d'abonnement. */
+  const sec = (debRe, finRe, maxi) => {
+    const j = T2.search(finRe);
+    if(j < 0) return '';
+    const fenetre = T2.slice(Math.max(0, j - maxi), j);
+    const k = fenetre.search(debRe);
+    return k < 0 ? fenetre : fenetre.slice(k);
+  };
+  const bAbo   = sec(/\bAbonnement\b/i, /Total\s+Abonnement/i, 1500);
+  const bConso = sec(/Total\s+Abonnement/i, /Total\s+Consommation/i, 1500);
+  const bTaxes = sec(/Taxes\s+et\s+Contributions/i, /Total\s+Taxes/i, 900);
+  const DATE = '(\\d{1,2}\\/\\d{1,2}\\/(?:\\d{4}|\\d{2}))';
+  const versISO = d => { const [j,mo,a] = d.split('/');
+    return (a.length === 2 ? '20'+a : a) + '-' + mo.padStart(2,'0') + '-' + j.padStart(2,'0'); };
+
+  // période réellement consommée, lue sur les lignes de consommation
+  if((m = bConso.match(new RegExp('du\\s*'+DATE+'\\s*au\\s*'+DATE,'i')))){
+    out.debut = versISO(m[1]); out.fin = versISO(m[2]);
+    if(!out.trouves.includes('luPeriode')) out.trouves.push('luPeriode');
+  }
+  const prixDans = (bloc, mot) => {
+    const r = new RegExp(mot+'[\\s\\S]{0,320}?(\\d[.,]\\d{4,6})','i');
+    const x = bloc.match(r); return x ? nbFac(x[1]) : null;
+  };
+  const hc = prixDans(bConso, 'heures?\\s*creuses'), hp = prixDans(bConso, 'heures?\\s*pleines');
+  if(hc != null){ out.hc = hc; out.trouves.push('luHC'); }
+  if(hp != null){ out.hp = hp; out.trouves.push('luHP'); }
+  const acc = prixDans(bTaxes, 'accise');
+  if(acc != null){ out.accise = acc; out.trouves.push('luAccise'); }
+  if((m = bTaxes.match(new RegExp('contribution\\s*tarifaire[\\s\\S]{0,160}?'+MONT,'i')))
+  || (m = bTaxes.match(new RegExp('\\bCTA\\b[\\s\\S]{0,120}?'+MONT))))
+    { out.cta = nbFac(m[1]); out.trouves.push('luCta'); }
+
+  /* Abonnement : on prend le total tel qu'il est imprimé. EDF le découpe en
+     tranches datées et facture d'avance la période suivante en remboursant
+     l'avance précédente, si bien que ce total mélange trois périodes. Le
+     répartir tel quel décale de quelques dizaines de centimes d'une facture à
+     l'autre, mais reste explicable au locataire, qui lit le même chiffre que
+     nous sur le document. Décision de la propriétaire, à ne pas défaire.
+     À défaut de total lisible, on additionne les tranches de la période. */
+  if((m = T2.match(new RegExp('Total\\s+Abonnement[^\\n]*\\n\\s*'+MONT,'i'))))
+    { out.fixe = nbFac(m[1]); out.trouves.push('luFixe'); }
+  else{
+    const reAbo = new RegExp('([^\\n]*?)du\\s*'+DATE+'\\s*au\\s*'+DATE
+      + '[^\\n]*\\n\\s*[\\d ]+,\\d{2}\\s*\\n\\s*(-?[\\d ]+,\\d{2})','gi');
+    let abo = 0, tranches = 0;
+    for(const x of bAbo.matchAll(reAbo)){
+      if(/d[ée]duction/i.test(x[1])) continue;
+      const a = versISO(x[2]), b = versISO(x[3]);
+      if(out.debut && out.fin && !(a < out.fin && b > out.debut)) continue;
+      abo += nbFac(x[4]); tranches++;
+    }
+    if(tranches){ out.fixe = Math.round(abo*100)/100; out.trouves.push('luFixe'); }
+  }
+
+  /* Consommation totale facturée, sur la ligne qui suit le total de la rubrique.
+     La fin de texte compte comme une fin de ligne : sans cela le nombre n'est
+     pas reconnu quand il termine le document, ce qui arrive dès que la rubrique
+     Consommation est la dernière lue. */
+  if((m = T2.match(/Total\s+Consommation[^\n]*\n\s*(\d[\d ]*?)\s*(?:\n|$)/i)))
+    { out.volume = nbFac(m[1]); out.trouves.push('luVolume'); }
+  /* Montant total, celui que la banque prélèvera. La ligne porte une date avant
+     la somme, « Total facture TTC du 17/08/2026 276,62 » : on prend donc le
+     dernier montant de la ligne. Les groupes de milliers font trois chiffres et
+     rien ne peut commencer au milieu d'un nombre, sans quoi « 2026 276,62 » se
+     lirait comme un seul montant. */
+  const ligneTTC = (T2.match(/^.*Total\s+facture\s+TTC.*$/im) || [])[0];
+  if(ligneTTC){
+    const sommes = ligneTTC.match(/(?<![\d,.\/])\d{1,3}(?:[  ]\d{3})*,\d{2}/g);
+    if(sommes){ out.montant = nbFac(sommes[sommes.length-1]); out.trouves.push('luMontant'); }
+  }
+
+  if((m = T2.match(/(\d{1,2})\s*kVA/i)))
+    { out.kva = nbFac(m[1]); out.trouves.push('luKva'); }
+  return out;
+}
+
+/* Texte d'un PDF sans bibliothèque. Trois pièges, et la façon de les éviter :
+
+   1. La fin d'un flux se lit dans son dictionnaire, à /Length, et non en
+      cherchant le mot « endstream ». Ces huit lettres apparaissent par hasard
+      dans des données binaires, et le flux tronqué ne se décompresse plus.
+   2. Un flux peut être compressé avec ou sans en-tête zlib, ou pas compressé
+      du tout. On essaie les trois plutôt que d'abandonner à la première erreur.
+   3. Une police embarquée contient elle aussi des parenthèses et parfois les
+      lettres Tj. Seuls les flux qui ouvrent et ferment un bloc de texte, BT et
+      ET, sont du contenu de page ; les autres sont écartés, sinon on ressort
+      du charabia binaire en croyant avoir lu la facture. */
+const deEchappe = x => x.replace(/\\(\d{1,3})/g, (_,o)=>String.fromCharCode(parseInt(o,8)))
+                        .replace(/\\n/g,'\n').replace(/\\r/g,'\n').replace(/\\t/g,' ')
+                        .replace(/\\([()\\])/g, '$1');
+const deHexa = x => (x.replace(/[^0-9A-Fa-f]/g,'').match(/../g) || [])
+  .map(p=>String.fromCharCode(parseInt(p,16))).join('');
+const MORCEAU = /\((?:\\[\s\S]|[^\\()])*\)|<[0-9A-Fa-f\s]*>|-?\d+(?:\.\d+)?/g;
+
+/* Un texte est jugé lisible si l'essentiel de ses caractères sont ceux qu'on
+   trouve sur une facture. En dessous, la police utilise un encodage propre et
+   les octets extraits ne sont pas des lettres. */
+function lisible(s){
+  const c = s.replace(/\s/g,'');
+  if(c.length < 20) return false;
+  // toute lettre de tout alphabet compte : la facture peut être en ukrainien
+  const bons = (c.match(/[\p{L}\p{N}€%.,;:'’«»()\/\-+°³²×=]/gu) || []).length;
+  return bons / c.length > 0.65;
+}
+
+/* Les filtres qu'une facture utilise réellement. Un flux peut en enchaîner
+   plusieurs, typiquement ASCII85 puis Flate : n'en défaire qu'un seul laisse
+   des octets illisibles qu'on prend à tort pour un document scanné. */
+function deA85(s){
+  s = s.replace(/^<~/,'').replace(/~>[\s\S]*$/,'').replace(/\s/g,'');
+  const out = []; let t = 0, n = 0;
+  for(const ch of s){
+    if(ch === 'z' && n === 0){ out.push(0,0,0,0); continue; }
+    const v = ch.charCodeAt(0) - 33;
+    if(v < 0 || v > 84) continue;
+    t = t*85 + v; n++;
+    if(n === 5){ out.push((t>>>24)&255,(t>>>16)&255,(t>>>8)&255,t&255); t = 0; n = 0; }
+  }
+  if(n){
+    for(let i=n;i<5;i++) t = t*85 + 84;
+    const b = [(t>>>24)&255,(t>>>16)&255,(t>>>8)&255,t&255];
+    for(let i=0;i<n-1;i++) out.push(b[i]);
+  }
+  return new Uint8Array(out);
+}
+function deAHx(s){
+  const h = s.replace(/>[\s\S]*$/,'').replace(/[^0-9A-Fa-f]/g,'');
+  const p = h.length % 2 ? h + '0' : h;
+  return new Uint8Array((p.match(/../g) || []).map(x=>parseInt(x,16)));
+}
+async function deFlate(oct){
+  for(const format of ['deflate','deflate-raw']){
+    try{
+      const flux = new Blob([oct]).stream().pipeThrough(new DecompressionStream(format));
+      const b = await new Response(flux).arrayBuffer();
+      if(b.byteLength) return new Uint8Array(b);
+    }catch(e){}
+  }
+  return null;
+}
+
+const latin = oct => new TextDecoder('latin1').decode(oct);
+
+/* Une table ToUnicode dit à quel caractère correspond chaque code de la police.
+   Sans elle, un sous-ensemble de police rend « \001\002\003 » là où la page
+   affiche « EDF » : le texte est présent, mais dans un alphabet privé. */
+const enUtf16 = hx => (hx.match(/..../g) || [])
+  .map(x=>String.fromCharCode(parseInt(x,16))).join('');
+function lireCMap(txt){
+  const map = new Map(); let large = false;
+  const cs = /begincodespacerange([\s\S]*?)endcodespacerange/.exec(txt);
+  if(cs && /<([0-9A-Fa-f]{3,})>/.test(cs[1])) large = true;
+  let reste = txt;
+  // forme à liste : <lo> <hi> [ <d1> <d2> … ], traitée d'abord puis effacée,
+  // sinon ses trois premiers éléments se lisent comme une forme à base
+  reste = reste.replace(/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*\[([\s\S]*?)\]/g, (_,lo,hi,liste)=>{
+    if(lo.length > 2) large = true;
+    let k = parseInt(lo,16);
+    for(const d of liste.matchAll(/<([0-9A-Fa-f]*)>/g)) map.set(k++, enUtf16(d[1]));
+    return ' ';
+  });
+  for(const b of reste.matchAll(/beginbfchar([\s\S]*?)endbfchar/g))
+    for(const m of b[1].matchAll(/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]*)>/g)){
+      if(m[1].length > 2) large = true;
+      map.set(parseInt(m[1],16), enUtf16(m[2]));
+    }
+  for(const b of reste.matchAll(/beginbfrange([\s\S]*?)endbfrange/g))
+    for(const m of b[1].matchAll(/<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]*)>/g)){
+      if(m[1].length > 2) large = true;
+      const lo = parseInt(m[1],16), hi = parseInt(m[2],16), base = parseInt(m[3],16);
+      const larg = m[3].length;
+      for(let c=lo; c<=hi && c-lo < 65536; c++)
+        map.set(c, enUtf16((base + (c-lo)).toString(16).padStart(larg,'0')));
+    }
+  return map.size ? {map, large} : null;
+}
+function versTexte(brut, cm){
+  if(!cm) return brut;
+  let out = '';
+  if(cm.large){
+    for(let i=0;i+1<brut.length;i+=2){
+      const c = (brut.charCodeAt(i)<<8) | brut.charCodeAt(i+1);
+      out += cm.map.has(c) ? cm.map.get(c) : '';
+    }
+  }else{
+    for(let i=0;i<brut.length;i++){
+      const c = brut.charCodeAt(i);
+      out += cm.map.has(c) ? cm.map.get(c)
+           : (c === 32 ? ' ' : (c > 32 && c < 127 ? brut[i] : ''));
+    }
+  }
+  return out;
+}
+
+/* Jetons utiles d'un flux de contenu : police, déplacement du curseur, texte.
+   EDF écrit un glyphe par opération, avec un déplacement explicite entre
+   chacun. Ajouter un espace après chaque opération donnerait « D o c u m e n t ».
+   Les mots ne se déduisent donc pas du découpage des opérations mais de la
+   position : un saut vertical fait une ligne, un saut horizontal plus large
+   qu'une lettre fait un espace, et les espaces réels sont écrits tels quels. */
+const N = '(-?[\\d.]+)';
+const JETONS = new RegExp(
+  '\\/([^\\s\\/<>\\[\\]()]+)\\s+' + N + '\\s+Tf'
++ '|' + N + '\\s+' + N + '\\s+T[dD]\\b'
++ '|' + [N,N,N,N,N,N].join('\\s+') + '\\s+Tm\\b'
++ '|\\((?:\\\\[\\s\\S]|[^\\\\()])*\\)\\s*(?:Tj|\'|")'
++ '|<[0-9A-Fa-f\\s]*>\\s*(?:Tj|\'|")'
++ '|\\[[^\\]]*\\]\\s*TJ'
++ '|\\bT\\*|\\bBT\\b|\\bET\\b', 'g');
+
+async function texteDuPdf(buf){
+  const oct = new Uint8Array(buf);
+  let bin = ''; for(let i=0;i<oct.length;i++) bin += String.fromCharCode(oct[i]);
+
+  // position de chaque objet, pour suivre les renvois « 12 0 R »
+  const objets = {};
+  for(const m of bin.matchAll(/(\d+)\s+\d+\s+obj\b/g)) objets[m[1]] = m.index;
+
+  const finDico = pos => {
+    const i = bin.indexOf('<<', pos);
+    if(i < 0) return [-1,-1];
+    let p = 0;
+    for(let k=i;k<bin.length-1;k++){
+      if(bin[k]==='<' && bin[k+1]==='<'){ p++; k++; }
+      else if(bin[k]==='>' && bin[k+1]==='>'){ p--; k++; if(!p) return [i,k+1]; }
+    }
+    return [-1,-1];
+  };
+  const dicoDe = num => {
+    const o = objets[num]; if(o == null) return '';
+    const [a,b] = finDico(o);
+    return a < 0 ? '' : bin.slice(a,b);
+  };
+  const nombreDe = num => {
+    const o = objets[num]; if(o == null) return null;
+    const m = /obj\s+(\d+)/.exec(bin.slice(o, o+60));
+    return m ? +m[1] : null;
+  };
+
+  /* Contenu décodé d'un objet flux : longueur lue dans le dictionnaire, puis
+     les filtres défaits dans l'ordre où ils sont déclarés. */
+  const fluxDe = async num => {
+    const o = objets[num]; if(o == null) return null;
+    const [a,b] = finDico(o); if(a < 0) return null;
+    const dico = bin.slice(a,b);
+    const ms = /stream\r?\n?/.exec(bin.slice(b, b+40));
+    if(!ms) return null;
+    const d = b + ms.index + ms[0].length;
+    let lg = null;
+    const dl = /\/Length\s+(\d+)(?!\s+\d+\s+R)/.exec(dico);
+    const di = /\/Length\s+(\d+)\s+\d+\s+R/.exec(dico);
+    if(dl) lg = +dl[1]; else if(di) lg = nombreDe(di[1]);
+    let f = (lg != null && d + lg <= bin.length
+             && /^\s*endstream/.test(bin.slice(d+lg, d+lg+12))) ? d + lg : -1;
+    if(f < 0){
+      f = bin.indexOf('endstream', d);
+      if(f < 0) return null;
+      while(f > d && (bin[f-1] === '\n' || bin[f-1] === '\r')) f--;
+    }
+    let data = oct.slice(d, f);
+    const fm = /\/Filter\s*(\[[^\]]*\]|\/[A-Za-z0-9]+)/.exec(dico);
+    const filtres = fm ? (fm[1].match(/\/([A-Za-z0-9]+)/g) || []).map(x=>x.slice(1)) : [];
+    for(const filtre of filtres){
+      if(filtre === 'ASCII85Decode')      data = deA85(latin(data));
+      else if(filtre === 'ASCIIHexDecode') data = deAHx(latin(data));
+      else if(filtre === 'FlateDecode'){
+        const z = await deFlate(data);
+        if(!z) return null;
+        data = z;
+      }else return null;                  // filtre non géré, image le plus souvent
+    }
+    return latin(data);
+  };
+
+  // tables ToUnicode, rangées par nom de police tel qu'il apparaît dans les pages
+  const cmaps = {};
+  const entrees = t => { const o = {};
+    for(const e of t.matchAll(/\/([^\s\/<>]+)\s+(\d+)\s+\d+\s+R/g)) o[e[1]] = e[2];
+    return o; };
+  const polices = {};
+  for(const m of bin.matchAll(/\/Font\s*<<([\s\S]{0,4000}?)>>/g))
+    Object.assign(polices, entrees(m[1]));
+  for(const m of bin.matchAll(/\/Font\s+(\d+)\s+\d+\s+R/g))
+    Object.assign(polices, entrees(dicoDe(m[1])));
+  for(const nom in polices){
+    const d = dicoDe(polices[nom]);
+    const tu = /\/ToUnicode\s+(\d+)\s+\d+\s+R/.exec(d);
+    if(!tu) continue;
+    const c = await fluxDe(tu[1]);
+    if(c) cmaps[nom] = lireCMap(c);
+  }
+
+  // parcours des flux de contenu
+  let txt = '', flux = 0, contenus = 0, avecTable = 0;
+  for(const num in objets){
+    flux++;
+    const c = await fluxDe(num);
+    if(!c || !(/\bBT\b/.test(c) && /\bET\b/.test(c) && /\bT[jJ]\b/.test(c))) continue;
+    contenus++;
+    let cm = null, taille = 10, y = null, x = null, ecrit = false;
+    const saut = () => { if(ecrit){ txt += '\n'; ecrit = false; } };
+    for(const g of c.matchAll(JETONS)){
+      const jeton = g[0];
+      if(g[1] != null){                                  // police
+        cm = cmaps[g[1]] || null; if(cm) avecTable++;
+        taille = Math.abs(+g[2]) || taille;
+        continue;
+      }
+      if(g[3] != null){                                  // déplacement relatif
+        const tx = +g[3], ty = +g[4];
+        if(ty !== 0) saut();
+        else if(ecrit && tx > taille*1.6) txt += ' ';    // saut de colonne
+        continue;
+      }
+      if(g[5] != null){                                  // matrice de texte
+        const nx = +g[9], ny = +g[10];
+        if(y != null && Math.abs(ny - y) > taille*0.4) saut();
+        else if(ecrit && x != null && nx - x > taille*1.6) txt += ' ';
+        x = nx; y = ny;
+        continue;
+      }
+      if(jeton === 'BT' || jeton === 'ET' || jeton === 'T*'){
+        saut(); if(jeton === 'BT'){ y = null; x = null; }
+        continue;
+      }
+      let bout = '';
+      for(const m of jeton.match(MORCEAU) || []){
+        if(m[0] === '(')      bout += versTexte(deEchappe(m.slice(1,-1)), cm);
+        else if(m[0] === '<') bout += versTexte(deHexa(m), cm);
+        else if(+m < -120)    bout += ' ';   // un grand recul sépare deux mots
+      }
+      if(bout){ txt += bout; if(bout.trim()) ecrit = true; }
+    }
+    txt += '\n';
+  }
+  const propre = txt.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  return {txt: propre, flux, contenus, avecTable,
+          etat: !contenus || !propre ? 'vide' : (lisible(propre) ? 'ok' : 'illisible')};
+}
+
+/* ── menus déroulants ────────────────────────────────── */
+function habillerSelects(racine){
+  racine.querySelectorAll('select:not([data-hab])').forEach(sel=>{
+    sel.dataset.hab = '1';
+    let boite = sel.parentNode;
+    if(!boite.classList.contains('ds')){
+      boite = document.createElement('div');
+      boite.className = 'ds';
+      sel.parentNode.insertBefore(boite, sel);
+      boite.appendChild(sel);
+    }
+    const bouton = document.createElement('button');
+    bouton.type = 'button'; bouton.className = 'ds-b';
+    bouton.setAttribute('aria-haspopup','listbox');
+    bouton.setAttribute('aria-expanded','false');
+    bouton.innerHTML = `<span></span>${ico('chevron',15)}`;
+    const liste = document.createElement('div');
+    liste.className = 'ds-l'; liste.hidden = true; liste.setAttribute('role','listbox');
+    boite.append(bouton, liste);
+
+    const majTexte = ()=>{ const o = sel.options[sel.selectedIndex];
+      bouton.firstElementChild.textContent = o ? o.textContent : ''; };
+    const peupler = ()=>{
+      liste.innerHTML = '';
+      Array.from(sel.options).forEach((o,i)=>{
+        const d = document.createElement('div');
+        d.className = 'ds-o' + (i === sel.selectedIndex ? ' on' : '');
+        d.setAttribute('role','option');
+        d.innerHTML = `<i>${i === sel.selectedIndex ? '✓' : ''}</i>${esc(o.textContent)}`;
+        d.onclick = ()=>{ sel.selectedIndex = i; majTexte();
+          sel.dispatchEvent(new Event('change', {bubbles:true})); ferme(); };
+        liste.appendChild(d);
+      });
+    };
+    const ferme = ()=>{ liste.hidden = true; bouton.setAttribute('aria-expanded','false');
+      document.removeEventListener('mousedown', dehors, true); };
+    const dehors = e => { if(!boite.contains(e.target)) ferme(); };
+    const ouvre = ()=>{ peupler(); liste.hidden = false;
+      bouton.setAttribute('aria-expanded','true');
+      document.addEventListener('mousedown', dehors, true);
+      const sur = liste.querySelector('.on'); if(sur) sur.scrollIntoView({block:'nearest'}); };
+
+    bouton.onclick = ()=> liste.hidden ? ouvre() : ferme();
+    bouton.onkeydown = e => {
+      if(e.key === 'Escape') return ferme();
+      if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+        e.preventDefault();
+        const n = sel.options.length; if(!n) return;
+        sel.selectedIndex = (sel.selectedIndex + (e.key === 'ArrowDown' ? 1 : n-1)) % n;
+        majTexte(); sel.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+    };
+    majTexte();
+  });
+}
+
+/* ── chrome ──────────────────────────────────────────── */
+/* Pied de page : l'impression du décompte, et repliées, les commandes de
+   sauvegarde. Rien de tout cela n'appartient au fil de la répartition, qui doit
+   se lire d'une traite jusqu'au total. */
+function vuePied(){
+  const pied = $('#pied'); if(!pied) return;
+  const c = S.calcul[FL];
+  const per = periodesMesurees(FL);
+  const r = per.length ? calculer(FL, c.debut, c.fin) : {erreur:1};
+  pied.innerHTML = (r.erreur ? '' :
+      `<p class="impr" style="margin:0"><a href="#" id="p-doc">${t('imprimer')}</a></p>`)
+    + blocSauvegarde();
+  const bd = $('#p-doc');
+  if(bd) bd.onclick = e => { e.preventDefault(); imprimer(docPour(r)); };
+  brancherSauvegarde();
+}
+
+function rafraichir(){ vueRepartition(); vueConso(); vueDonnees(); vuePied(); }
+
+function setLang(l){
+  LANG = l; localStorage.setItem(KEY+'-lang', l);
+  document.documentElement.lang = l;
+  $('#b-fr').classList.toggle('on', l==='fr');
+  $('#b-uk').classList.toggle('on', l==='uk');
+  tout();
+}
+function setFluide(f){
+  FL = f; localStorage.setItem(KEY+'-fluide', f);
+  document.body.dataset.fluide = f;
+  partConso = '';
+  tout();
+}
+document.querySelectorAll('#bascule button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#bascule button').forEach(x=> x.classList.toggle('on', x===b));
+    setFluide(b.dataset.fluide);
+  };
+});
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on', x===b));
+    ['repartition','conso','donnees'].forEach(v=>{ $('#vue-'+v).hidden = (v !== b.dataset.vue); });
+  };
+});
+$('#rel-plus').onclick = ()=>{ relEdit = null; ouvrir('rel'); };
+$('#fac-plus').onclick = ()=>{ facEdit = null; ouvrir('fac'); };
+
+function tout(){
+  $('#h-titre').textContent = titreFluide(FL);
+  $('#i-drop').innerHTML = ico(FLUIDES[FL].icone, 24);
+  const lib = {repartition:t('tRepartition'), conso:t('tConso'), donnees:t('tDonnees')};
+  document.querySelectorAll('nav.tabs button').forEach(b=> b.textContent = lib[b.dataset.vue]);
+  document.querySelectorAll('#bascule button').forEach(b=>{
+    b.innerHTML = ico(FLUIDES[b.dataset.fluide].icone, 15) + ' '
+      + t(b.dataset.fluide === 'eau' ? 'fEau' : 'fElec');
+    b.classList.toggle('on', b.dataset.fluide === FL);
+  });
+  $('#rel-plus').innerHTML = ico('plus',15) + ' ' + t('saisieReleve');
+  $('#fac-plus').innerHTML = ico('plus',15) + ' ' + t('saisieFacture');
+  rafraichir();
+}
+$('#i-globe').innerHTML = ico('globe',15);
+document.body.dataset.fluide = FL;
+setLang(LANG);
+
+/* Mise en réserve pour l'usage hors ligne. Échoue sans bruit hors d'un serveur :
+   la page reste parfaitement utilisable ouverte depuis un fichier. */
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
