@@ -14,7 +14,7 @@
  *    arrière-plan. L'app s'ouvre instantanément et la mise à jour est prise au
  *    lancement suivant, ce qui vaut mieux qu'une attente au démarrage.
  */
-const VERSION = 'ec8fbdac1abf';
+const VERSION = '1cdd13df24c0';
 const RESERVE = 'gascourt-' + VERSION;
 const PIECES = ['./', './index.html', './manifest.webmanifest',
                 './icone-180.png', './icone-192.png', './icone-512.png'];

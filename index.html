@@ -596,6 +596,10 @@ fr:{
  bienvenueTexte:"L'app s'installe vide, et c'est voulu : rien de personnel n'est publié sur internet. Vos relevés et vos factures vivent dans un dépôt privé qui n'appartient qu'à vous. Reliez cet appareil à ce dépôt et tout apparaîtra ici, y compris hors réseau une fois la première synchronisation faite.",
  bienvenueBouton:"Ouvrir les réglages",
  bienvenueSansCompteur:"Aucun compteur n'est encore défini sur cet appareil. Reliez-le à vos données, en bas de la page, pour saisir un relevé.",
+ perteEnr:"{q} « {x} »", pertePartsDe:"les parts convenues de {f}",
+ perte_releves:"le relevé du", perte_factures:"la facture", perte_signalements:"le signalement",
+ perte_compteurs:"le compteur", perte_logements:"le logement",
+ syncPerte:"Envoi refusé : il aurait fait disparaître du dépôt {x}, sans qu'une suppression l'explique. Rien n'a été écrit, vos données et celles du dépôt sont intactes. Signalez-le, c'est le signe d'un défaut.",
  syncTitre:"Synchronisation entre appareils",
  syncS:"Les données vivent dans un fichier d'un dépôt privé que vous possédez. Chaque appareil en garde une copie, travaille hors ligne, et les réunit dès qu'il retrouve le réseau. Le jeton reste sur cet appareil et ne part jamais dans un export.",
  syncDepot:"Dépôt, sous la forme compte/nom", syncChemin:"Fichier dans le dépôt",
@@ -797,6 +801,10 @@ uk:{
  bienvenueTexte:"Застосунок встановлюється порожнім, і це навмисне: нічого особистого не публікується в інтернеті. Ваші показники та рахунки зберігаються у приватному сховищі, яке належить лише вам. Підключіть цей пристрій до сховища — і все з'явиться тут, зокрема й без мережі після першої синхронізації.",
  bienvenueBouton:"Відкрити налаштування",
  bienvenueSansCompteur:"На цьому пристрої ще не визначено жодного лічильника. Підключіть його до ваших даних унизу сторінки, щоб вводити показники.",
+ perteEnr:"{q} «{x}»", pertePartsDe:"погоджені частки: {f}",
+ perte_releves:"показник за", perte_factures:"рахунок", perte_signalements:"повідомлення",
+ perte_compteurs:"лічильник", perte_logements:"помешкання",
+ syncPerte:"Надсилання відхилено: воно вилучило б зі сховища {x}, і жодне видалення цього не пояснює. Нічого не записано, ваші дані та дані сховища цілі. Повідомте про це — це ознака помилки.",
  syncTitre:"Синхронізація між пристроями",
  syncS:"Дані зберігаються у файлі приватного сховища, яке належить вам. Кожен пристрій має свою копію, працює офлайн і об'єднує зміни, щойно з'явиться мережа. Токен залишається на цьому пристрої й ніколи не потрапляє в експорт.",
  syncDepot:"Сховище, у вигляді обліковий-запис/назва", syncChemin:"Файл у сховищі",
@@ -3092,6 +3100,31 @@ async function pousser(c, sha, message){
   return {sha: j.content && j.content.sha};
 }
 
+/* ── refuser d'appauvrir le dépôt ──
+   Un défaut de fusion ne se contente pas de mal afficher : il écrit. Les parts
+   convenues ont ainsi été effacées du dépôt par un appareil qui ne les avait
+   pas. Avant d'envoyer, on compare donc ce qu'on s'apprête à écrire avec ce
+   qu'on vient de lire : si quelque chose disparaît sans qu'une suppression
+   l'explique, on n'envoie pas. Mieux vaut une synchronisation qui échoue et le
+   dit qu'un dépôt vidé en silence. */
+function pertes(distant, envoi){
+  const out = [];
+  const enterres = new Set((envoi.supprimes || []).map(x => x.type + ':' + x.id));
+  const nommer = o => o.nom || o.libelle || o.date || o.id;
+  for(const nom of ['releves','factures','signalements','compteurs','logements']){
+    const ici = new Set((envoi[nom] || []).map(o => o.id));
+    for(const o of (distant[nom] || []))
+      if(!ici.has(o.id) && !enterres.has(nom + ':' + o.id))
+        out.push(t('perteEnr', {q:t('perte_' + nom), x:nommer(o)}));
+  }
+  for(const fl of ['eau','elec']){
+    const la  = Object.keys(((distant.parts || {})[fl]) || {}).length;
+    const ici = Object.keys(((envoi.parts  || {})[fl]) || {}).length;
+    if(la && !ici) out.push(t('pertePartsDe', {f:t(fl === 'eau' ? 'fEau' : 'fElec')}));
+  }
+  return out;
+}
+
 /* Un aller-retour complet : on prend ce qui est là-bas, on le fond avec ce
    qu'on a, on renvoie le résultat. Si quelqu'un a écrit entre notre lecture et
    notre écriture, GitHub refuse ; on recommence avec la version fraîche plutôt
@@ -3112,6 +3145,10 @@ async function synchroniser(manuelle){
         const {etat, rap} = fusionner(S, distant.contenu);
         S = etat; sauver(true);
         rapport = rap;
+      }
+      if(!distant.absent){
+        const perdu = pertes(distant.contenu, JSON.parse(etatAEnvoyer()));
+        if(perdu.length) return {etat:'perte', perdu};
       }
       const envoi = await pousser(c, sha, manuelle ? 'Gascourt · synchronisation manuelle' : null);
       if(!envoi.conflit){
@@ -3149,6 +3186,12 @@ function majEtatSync(r){
       ? (c.dernier ? t('syncDernier',{d:new Date(c.dernier).toLocaleString(loc())}) : t('syncJamais'))
       : t('syncInactive');
     el.className = 'englobe';
+    return;
+  }
+  if(r.etat === 'perte'){
+    el.textContent = t('syncPerte', {x:r.perdu.slice(0, 4).join(', ')
+      + (r.perdu.length > 4 ? ', …' : '')});
+    el.className = 'englobe alerte';
     return;
   }
   const mots = {ok:'syncFaite', absent:'syncInactive', occupe:'syncEnCours',
