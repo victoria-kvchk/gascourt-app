@@ -592,6 +592,10 @@ fr:{
  sourceHT:"d'après le prix HT majoré de {x} %",
  errPrixManquant:"Renseignez au moins un prix, ou le montant total et le volume.",
  exporter:"Exporter", importer:"Importer un fichier", effacer:"Tout effacer",
+ bienvenueTitre:"Cet appareil n'a pas encore vos données",
+ bienvenueTexte:"L'app s'installe vide, et c'est voulu : rien de personnel n'est publié sur internet. Vos relevés et vos factures vivent dans un dépôt privé qui n'appartient qu'à vous. Reliez cet appareil à ce dépôt et tout apparaîtra ici, y compris hors réseau une fois la première synchronisation faite.",
+ bienvenueBouton:"Ouvrir les réglages",
+ bienvenueSansCompteur:"Aucun compteur n'est encore défini sur cet appareil. Reliez-le à vos données, en bas de la page, pour saisir un relevé.",
  syncTitre:"Synchronisation entre appareils",
  syncS:"Les données vivent dans un fichier d'un dépôt privé que vous possédez. Chaque appareil en garde une copie, travaille hors ligne, et les réunit dès qu'il retrouve le réseau. Le jeton reste sur cet appareil et ne part jamais dans un export.",
  syncDepot:"Dépôt, sous la forme compte/nom", syncChemin:"Fichier dans le dépôt",
@@ -789,6 +793,10 @@ uk:{
  sourceHT:"за ціною без ПДВ, збільшеною на {x} %",
  errPrixManquant:"Вкажіть щонайменше одну ціну або загальну суму та обсяг.",
  exporter:"Експортувати", importer:"Імпортувати файл", effacer:"Стерти все",
+ bienvenueTitre:"На цьому пристрої ще немає ваших даних",
+ bienvenueTexte:"Застосунок встановлюється порожнім, і це навмисне: нічого особистого не публікується в інтернеті. Ваші показники та рахунки зберігаються у приватному сховищі, яке належить лише вам. Підключіть цей пристрій до сховища — і все з'явиться тут, зокрема й без мережі після першої синхронізації.",
+ bienvenueBouton:"Відкрити налаштування",
+ bienvenueSansCompteur:"На цьому пристрої ще не визначено жодного лічильника. Підключіть його до ваших даних унизу сторінки, щоб вводити показники.",
  syncTitre:"Синхронізація між пристроями",
  syncS:"Дані зберігаються у файлі приватного сховища, яке належить вам. Кожен пристрій має свою копію, працює офлайн і об'єднує зміни, щойно з'явиться мережа. Токен залишається на цьому пристрої й ніколи не потрапляє в експорт.",
  syncDepot:"Сховище, у вигляді обліковий-запис/назва", syncChemin:"Файл у сховищі",
@@ -1731,8 +1739,30 @@ function carteLogement(r, l, i, statique){
 const grilleCartes = (r, statique) =>
   `<div class="quad">${r.lignes.map((l,i)=> carteLogement(r, l, i, statique)).join('')}</div>`;
 
+/* Un appareil qui vient d'installer l'app n'a rien : ni logement, ni compteur,
+   ni relevé. Lui présenter un formulaire sans champs et un calcul impossible
+   donne l'impression d'un outil cassé, alors qu'il attend simplement d'être
+   relié à ses données. */
+function blocBienvenue(){
+  return `<div class="block">
+    <div class="bhead"><div class="badge">${ico('disque',26)}</div><div>
+      <h2>${t('bienvenueTitre')}</h2></div></div>
+    <p class="englobe" style="margin:0 0 4px; max-width:62ch">${t('bienvenueTexte')}</p>
+    <div class="row"><button class="act" id="b-bienvenue">${t('bienvenueBouton')}</button></div>
+  </div>`;
+}
+
 function vueRepartition(){
   const fl = FL, c = S.calcul[fl];
+  if(!S.logements.length || !compteursDe(fl).length){
+    $('#vue-repartition').innerHTML = blocBienvenue();
+    const b = $('#b-bienvenue');
+    if(b) b.onclick = ()=>{
+      const d = $('#p-donnees');
+      if(d){ d.open = true; d.scrollIntoView({behavior:'smooth', block:'start'}); }
+    };
+    return;
+  }
   const toutes = periodesMesurees(fl);
   const connue = toutes.some(p=> p.A.id===c.debut && p.B.id===c.fin);
   if(!connue && toutes.length){
@@ -2376,6 +2406,7 @@ function formRelev(){
   const champ = (c, cad) => `<div><label>${esc(c.nom)}${cads.length>1?' · '+nomCadranCourt(cad):''}</label>
     <input type="number" step="${pas}" min="0" class="num" id="ri-${c.id.replace(/[:]/g,'_')}-${cad}"></div>`;
   const gen = cpts.filter(c=>!c.logement), sous = cpts.filter(c=>c.logement);
+  if(!sous.length) return `<div id="rel-form"><p class="englobe">${t('bienvenueSansCompteur')}</p></div>`;
   return `<div id="rel-form">
     <div class="grid g2">
       <div><label>${t('dateReleve')}</label><input type="date" id="rel-date"></div>
