@@ -3659,9 +3659,23 @@ document.body.dataset.fluide = FL;
 setLang(LANG);
 
 /* Mise en réserve pour l'usage hors ligne. Échoue sans bruit hors d'un serveur :
-   la page reste parfaitement utilisable ouverte depuis un fichier. */
+   la page reste parfaitement utilisable ouverte depuis un fichier.
+
+   Une version neuve prenait effet au deuxième lancement : la réserve sert
+   l'ancienne page pendant que la nouvelle s'installe en arrière-plan. On
+   recharge donc dès que la nouvelle prend la main, ce qui la met en service au
+   premier lancement. Le garde-fou évite qu'un premier passage, où il n'y avait
+   encore personne aux commandes, ne déclenche un rechargement inutile. */
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))
-  addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  addEventListener('load', ()=>{
+    const avaitDejaUneVersion = !!navigator.serviceWorker.controller;
+    let rechargee = false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(rechargee || !avaitDejaUneVersion) return;
+      rechargee = true; location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
 </script>
 </body>
 </html>
