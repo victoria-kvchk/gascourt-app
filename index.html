@@ -295,6 +295,68 @@
   }
   @media(prefers-reduced-motion:reduce){*{transition:none !important}}
 
+
+  /* ── au doigt, sur un téléphone ─────────────────────────
+     L'app sert d'abord à saisir des index devant un compteur, donc debout, à
+     une main, sur un écran de moins de 400 points. Ce qui suit ne rétrécit pas
+     l'affichage de bureau : ce sont des règles qui ne s'appliquent qu'en deçà. */
+  @media (max-width:760px){
+    .wrap{padding:14px 12px 56px}
+    .head{padding:16px 16px; border-radius:14px; margin-bottom:14px}
+    .head h1{font-size:22px; line-height:1.2}
+    .head .hrow{flex-wrap:wrap; gap:12px}
+    .drop{width:38px; height:38px; border-radius:10px}
+    /* la langue passe sous le titre plutôt que de l'écraser */
+    .langs{margin-left:0; order:3; width:100%}
+    .langs button{flex:1; justify-content:center}
+    .hrow.barre{flex-wrap:wrap; gap:10px; margin-top:14px}
+    .fluides{width:100%}
+    .fluides button{flex:1; justify-content:center}
+    /* les onglets défilent au doigt au lieu de se replier sur deux lignes */
+    nav.tabs{width:100%; gap:20px; overflow-x:auto; flex-wrap:nowrap;
+      scrollbar-width:none; -webkit-overflow-scrolling:touch}
+    nav.tabs::-webkit-scrollbar{display:none}
+    nav.tabs button{white-space:nowrap; flex:none}
+    /* les deux boutons se partagent une rangée : le style en ligne fixe
+       flex:none, il faut le forcer ici */
+    #rel-plus, #fac-plus{flex:1 1 0 !important; min-width:0;
+      margin-left:0 !important; justify-content:center}
+    .block{padding:16px 14px 18px; border-radius:14px; margin-bottom:14px}
+    .bhead{flex-wrap:wrap; gap:10px}
+    .bhead h2{font-size:18px}
+    /* le sélecteur de période prenait 340 points de large, il débordait */
+    .perio{min-width:0; width:100%; margin:0}
+    .voile{padding:12px 8px}
+    .voile .panneau{padding:18px 16px 20px; border-radius:14px}
+    .total{flex-wrap:wrap; gap:6px}
+    .total b{font-size:21px}
+    h4{margin:18px 0 8px}
+    /* Dans un tableau plus large que l'écran, la première colonne reste
+       visible pendant qu'on fait défiler les chiffres : sans elle on ne sait
+       plus de quelle ligne on lit la valeur. */
+    .scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+    .scroll th:first-child, .scroll td:first-child{
+      position:sticky; left:0; background:var(--card); z-index:2}
+    .scroll tr.tot td:first-child{background:var(--accent-soft)}
+    th,td{padding:10px 9px}
+  }
+  @media (max-width:430px){
+    .head h1{font-size:20px}
+    .quad{gap:10px}
+    .figure figcaption{font-size:12.5px}
+  }
+  /* Écran tactile, quelle que soit la largeur. */
+  @media (pointer:coarse){
+    /* en deçà de seize points, iOS grossit la page dès qu'on touche un champ,
+       et l'on se retrouve à saisir un index dans une page décadrée */
+    input,select,textarea{font-size:16px}
+    button.act, button.ghost, .plus, .ds-b{min-height:44px}
+    button.mini{min-height:34px; padding:6px 14px}
+    nav.tabs button{padding:12px 2px}
+    .ds-o{padding:12px 11px}
+    .fluides button, .langs button, .seg button{min-height:38px}
+  }
+
   /* ── document imprimé : construit à part, jamais l'écran plaqué sur du papier ── */
   @page{ size:A4; margin:14mm 10mm 15mm; }
   #impression{display:none}
