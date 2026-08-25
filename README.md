@@ -13,4 +13,4 @@ Le code source, les tests et le script d'assemblage sont tenus ailleurs, dans un
 dépôt privé : son historique porte des données personnelles, et l'on ne rend pas
 public un passé.
 
-Version en réserve : `1cdd13df24c0`
+Version en réserve : `d3df17938f91`
