@@ -326,8 +326,23 @@
     .bhead h2{font-size:18px}
     /* le sélecteur de période prenait 340 points de large, il débordait */
     .perio{min-width:0; width:100%; margin:0}
-    .voile{padding:12px 8px}
-    .voile .panneau{padding:18px 16px 20px; border-radius:14px}
+    /* La saisie devient une feuille qui remonte du bas.
+       inset:0 couvre la zone masquée par la barre d'outils de Safari : le bas
+       du formulaire s'y cache, et comme le navigateur croit que tout tient, il
+       n'offre aucun défilement. dvh mesure ce qui est réellement visible, et
+       c'est le panneau lui-même qui défile. */
+    .voile{padding:0; align-items:flex-end; overflow:hidden;
+      height:100vh; height:100dvh}
+    .voile .panneau{width:100%; max-width:none; border-radius:16px 16px 0 0;
+      max-height:100vh; max-height:94dvh; overflow-y:auto;
+      overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+      padding:18px 14px 0}
+    /* les boutons restent sous le pouce quel que soit le défilement */
+    #modal .panneau > .row{position:sticky; bottom:0; z-index:3;
+      background:var(--card); margin:14px -14px 0;
+      padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+      border-top:1px solid var(--line)}
+    #modal .panneau > div:last-child{padding-bottom:14px}
     .total{flex-wrap:wrap; gap:6px}
     .total b{font-size:21px}
     h4{margin:18px 0 8px}
